@@ -69,22 +69,19 @@ const EditCatergoties = ({ open, setOpen }: IEditCatergoties) => {
           </ul>
 
           <div className={styles.addCatSection}>
-            <div className={styles.addCategoryDiv}>
-              <AppInput
-                label="Add New Category"
-                value={newCategory}
-                onChange={handleNewCategoryChange}
-                errorMessage={categoryError ? categoryError : undefined}
-              />
+            <AppInput
+              label="Add New Category"
+              value={newCategory}
+              onChange={handleNewCategoryChange}
+              errorMessage={categoryError ? categoryError : undefined}
+            />
 
-              <AppButton
-                text="Add"
-                variant="success"
-                onClick={handleAddNewCategory}
-              />
-            </div>
+            <AppButton
+              text="Add"
+              variant="success"
+              onClick={handleAddNewCategory}
+            />
           </div>
-
           <div className={styles.editButtons}>
             <AppButton
               fullWidth

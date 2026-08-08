@@ -53,7 +53,9 @@ const AppInput = ({
         <small className={styles.helper}>{helperText}</small>
       )}
 
-      {errorMessage && <small className={styles.error}>{errorMessage}</small>}
+      {errorMessage && (
+        <small className={styles.error}>{errorMessage || "\u00A0"}</small>
+      )}
     </div>
   );
 };

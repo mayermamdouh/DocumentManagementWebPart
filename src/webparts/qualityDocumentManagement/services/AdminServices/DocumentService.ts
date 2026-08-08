@@ -6,6 +6,7 @@ import {
   ISearchParent,
 } from "../../types/adminTypes";
 import { AddToList } from "./ListsService";
+import { DOCUMENT_COLUMNS } from "../../constants/columns";
 
 export const validateDocument = async (
   sp: SPFI,
@@ -116,35 +117,35 @@ export const AddNewDocument = async (
     await listItem.validateUpdateListItem(
       [
         {
-          FieldName: "DocName",
+          FieldName: DOCUMENT_COLUMNS.DOCUMENT_NAME,
           FieldValue: docDataForm.docName,
         },
         {
-          FieldName: "DocReference",
+          FieldName: DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
           FieldValue: docDataForm.docReference,
         },
         {
-          FieldName: "DocCategory",
+          FieldName: DOCUMENT_COLUMNS.CATEGORY,
           FieldValue: docDataForm.docCategory,
         },
         {
-          FieldName: "DocDepartment",
+          FieldName: DOCUMENT_COLUMNS.DEPARTMENT,
           FieldValue: docDataForm.docDepartment,
         },
         {
-          FieldName: "DocType",
+          FieldName: DOCUMENT_COLUMNS.DOCUMENT_TYPE,
           FieldValue: docDataForm.docType,
         },
         {
-          FieldName: "DocParent",
+          FieldName: DOCUMENT_COLUMNS.PARENT_DOCUMENT,
           FieldValue: docDataForm.docParent?.toString() ?? "",
         },
         {
-          FieldName: "DocOwner",
+          FieldName: DOCUMENT_COLUMNS.OWNER,
           FieldValue: `[{"Key":"${docDataForm.docOwnerLoginName}"}]`,
         },
         {
-          FieldName: "DocKeywords",
+          FieldName: DOCUMENT_COLUMNS.KEYWORDS,
           FieldValue: JSON.stringify(
             docDataForm.docKeywords
               .split(/\s+/)
@@ -161,10 +162,10 @@ export const AddNewDocument = async (
     await AddToList(sp, libraryName, {
       DocumentId: item.Id,
       ParentDocumentId: docDataForm.docParent ?? null,
-      DocReference: docDataForm.docReference,
-      DocName: docDataForm.docName,
-      DocCategory: docDataForm.docCategory,
-      DocDepartment: docDataForm.docDepartment,
+      [DOCUMENT_COLUMNS.DOCUMENT_REFERENCE]: docDataForm.docReference,
+      [DOCUMENT_COLUMNS.DOCUMENT_NAME]: docDataForm.docName,
+      [DOCUMENT_COLUMNS.CATEGORY]: docDataForm.docCategory,
+      [DOCUMENT_COLUMNS.DEPARTMENT]: docDataForm.docDepartment,
     });
 
     return item.Id;
@@ -232,13 +233,13 @@ export const getLibraryDocuemnts = async (
       "Author/Id",
       "Author/Title",
       "Author/EMail",
-      "DocReference",
-      "DocName",
-      "DocType",
-      "DocParent",
-      "DocCategory",
-      "DocDepartment",
-      "DocKeywords",
+      DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
+      DOCUMENT_COLUMNS.DOCUMENT_NAME,
+      DOCUMENT_COLUMNS.DOCUMENT_TYPE,
+      DOCUMENT_COLUMNS.PARENT_DOCUMENT,
+      DOCUMENT_COLUMNS.CATEGORY,
+      DOCUMENT_COLUMNS.DEPARTMENT,
+      DOCUMENT_COLUMNS.KEYWORDS,
       "OData__ModerationStatus",
       "DocOwner/Id",
       "DocOwner/Title",
@@ -272,7 +273,7 @@ export const getParentDocument = async (
     return [];
   }
 
-  let filter = `substringof('${searchValue}', DocName)`;
+  let filter = `substringof('${searchValue}', ${DOCUMENT_COLUMNS.DOCUMENT_NAME})`;
 
   if (currentDocumentId !== undefined) {
     filter += ` and Id ne ${currentDocumentId}`;
@@ -280,7 +281,12 @@ export const getParentDocument = async (
 
   const items = await sp.web.lists
     .getByTitle(libraryName)
-    .items.select("Id", "DocName", "DocType", "DocParent")
+    .items.select(
+      "Id",
+      DOCUMENT_COLUMNS.DOCUMENT_NAME,
+      DOCUMENT_COLUMNS.DOCUMENT_TYPE,
+      DOCUMENT_COLUMNS.PARENT_DOCUMENT,
+    )
     .filter(filter)
     .top(10)();
 

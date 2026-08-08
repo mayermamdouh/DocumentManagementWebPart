@@ -1,5 +1,6 @@
 import { SPFI } from "@pnp/sp";
 import { ICurrentFile, IFileVersion } from "../../types/adminTypes";
+import { FILE_FIELDS } from "../../constants/columns";
 
 export const GetFileVersions = async (
   sp: SPFI,
@@ -10,21 +11,21 @@ export const GetFileVersions = async (
   const [versions, lastFile] = await Promise.all([
     file.versions
       .select(
-        "ID",
-        "VersionLabel",
-        "Created",
-        "IsCurrentVersion",
-        "CreatedBy/Title",
+        FILE_FIELDS.ID,
+        FILE_FIELDS.VERSION_LABEL,
+        FILE_FIELDS.CREATED,
+        FILE_FIELDS.IS_CURRENT_VERSION,
+        FILE_FIELDS.CREATED_BY_TITLE,
       )
       .expand("CreatedBy")(),
 
     file
       .select(
-        "Name",
-        "TimeLastModified",
-        "MajorVersion",
-        "MinorVersion",
-        "ModifiedBy/Title",
+        FILE_FIELDS.NAME,
+        FILE_FIELDS.TIME_LAST_MODIFIED,
+        FILE_FIELDS.MAJOR_VERSION,
+        FILE_FIELDS.MINOR_VERSION,
+        FILE_FIELDS.MODIFIED_BY_TITLE,
       )
       .expand("ModifiedBy")() as Promise<ICurrentFile>,
   ]);

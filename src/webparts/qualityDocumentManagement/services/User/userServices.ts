@@ -2,6 +2,10 @@ import { SPFI } from "@pnp/sp";
 import { ILibraryDocument } from "../../types/adminTypes";
 import { IListItem } from "../../types/listTypes";
 import { IUserLibraryDocument } from "../../types/userTypes";
+import {
+  DOCUMENT_COLUMNS,
+  DOCUMENT_RELATION_COLUMNS,
+} from "../../constants/columns";
 
 const escapeODataValue = (value: string): string => {
   return value.replace(/'/g, "''");
@@ -12,24 +16,24 @@ const selectFields = [
   "File",
   "File/Name",
   "File/ServerRelativeUrl",
-  "DocReference",
-  "DocName",
-  "DocType",
-  "DocParent",
-  "DocCategory",
-  "DocDepartment",
+  DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
+  DOCUMENT_COLUMNS.DOCUMENT_NAME,
+  DOCUMENT_COLUMNS.DOCUMENT_TYPE,
+  DOCUMENT_COLUMNS.PARENT_DOCUMENT,
+  DOCUMENT_COLUMNS.CATEGORY,
+  DOCUMENT_COLUMNS.DEPARTMENT,
   "OData__ModerationStatus",
-  "DocOwner/Id",
-  "DocOwner/Title",
+  `${DOCUMENT_COLUMNS.OWNER}/Id`,
+  `${DOCUMENT_COLUMNS.OWNER}/Title`,
 ];
 
 const relationSelectFields = [
-  "DocReference",
-  "DocName",
-  "DocCategory",
-  "DocDepartment",
-  "DocumentId",
-  "ParentDocumentId",
+  DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
+  DOCUMENT_COLUMNS.DOCUMENT_NAME,
+  DOCUMENT_COLUMNS.CATEGORY,
+  DOCUMENT_COLUMNS.DEPARTMENT,
+  DOCUMENT_RELATION_COLUMNS.DOCUMENT_ID,
+  DOCUMENT_RELATION_COLUMNS.PARENT_DOCUMENT_ID,
 ];
 
 const getRelationById = async (
@@ -39,7 +43,7 @@ const getRelationById = async (
 ): Promise<IListItem | null> => {
   const items = await sp.web.lists
     .getByTitle(relationsListName)
-    .items.filter(`DocumentId eq ${documentId}`)
+    .items.filter(`${DOCUMENT_RELATION_COLUMNS.DOCUMENT_ID} eq ${documentId}`)
     .select(...relationSelectFields)();
 
   if (items.length === 0) {
@@ -56,7 +60,9 @@ const getRelationsByParentId = async (
 ): Promise<IListItem[]> => {
   const items = await sp.web.lists
     .getByTitle(relationsListName)
-    .items.filter(`ParentDocumentId eq ${parentId}`)
+    .items.filter(
+      `${DOCUMENT_RELATION_COLUMNS.PARENT_DOCUMENT_ID} eq ${parentId}`,
+    )
     .select(...relationSelectFields)();
 
   return items as IListItem[];
@@ -169,13 +175,13 @@ export const searchUserDocuments = async (
   const escapedSearchTerm = escapeODataValue(searchTerm);
 
   const searchFilter = `
-    substringof('${escapedSearchTerm}', DocName)
-    or substringof('${escapedSearchTerm}', DocReference)
-    or substringof('${escapedSearchTerm}', DocDepartment)
-  `;
+  substringof('${escapedSearchTerm}', ${DOCUMENT_COLUMNS.DOCUMENT_NAME})
+  or substringof('${escapedSearchTerm}', ${DOCUMENT_COLUMNS.DOCUMENT_REFERENCE})
+  or substringof('${escapedSearchTerm}', ${DOCUMENT_COLUMNS.DEPARTMENT})
+`;
 
   const categoryFilter = category
-    ? ` and DocCategory eq '${escapeODataValue(category)}'`
+    ? ` and ${DOCUMENT_COLUMNS.CATEGORY} eq '${escapeODataValue(category)}'`
     : "";
 
   const filter = `
@@ -187,7 +193,6 @@ export const searchUserDocuments = async (
     .getByTitle(relationsListName)
     .items.select(...relationSelectFields)
     .filter(filter)();
-
 
   const relationsMap = new Map<number, IListItem>();
 

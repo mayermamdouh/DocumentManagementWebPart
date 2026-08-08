@@ -150,16 +150,14 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
       {props.appTitle && <h1 className={styles.appTitle}>{props.appTitle}</h1>}
 
       <div className={styles.pageSelector}>
-        {!isAdmin && (
-          <AppButton
-            text="User"
-            fullWidth={true}
-            iconName="People"
-            variant={activePage === "UserPage" ? "primary" : "secondary"}
-            size="md"
-            onClick={() => setActivePage("UserPage")}
-          />
-        )}
+        <AppButton
+          text="User"
+          fullWidth={true}
+          iconName="People"
+          variant={activePage === "UserPage" ? "primary" : "secondary"}
+          size="md"
+          onClick={() => setActivePage("UserPage")}
+        />
 
         {isAdmin && (
           <AppButton
@@ -194,7 +192,7 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
         <AppToast message={message} type="success" onClose={clearMessage} />
       )}
       <div className={styles.pageContent}>
-        {!isAdmin ? (
+        {activePage === "UserPage" ? (
           <UserPage
             activeLibraryId={activeLibraryId}
             libraryName={

@@ -1,6 +1,6 @@
 import { SPFI } from "@pnp/sp";
 
-import { DOCUMENT_COLUMNS } from "../../constants/columns";
+import { DOCUMENT_COLUMNS, DOCUMENT_RELATION_COLUMNS } from "../../constants/columns";
 
 export const ensureDocumentLibraryColumns = async (
   sp: SPFI,
@@ -179,25 +179,25 @@ export const ensureDocumentRelationsList = async (
   const list = sp.web.lists.getByTitle(listTitle);
 
   await Promise.all([
-    list.fields.addText("DocReference", {
+    list.fields.addText(DOCUMENT_COLUMNS.DOCUMENT_REFERENCE, {
       MaxLength: 255,
     }),
 
-    list.fields.addText("DocName", {
+    list.fields.addText(DOCUMENT_COLUMNS.DOCUMENT_NAME, {
       MaxLength: 255,
     }),
 
-    list.fields.addText("DocCategory", {
+    list.fields.addText(DOCUMENT_COLUMNS.CATEGORY, {
       MaxLength: 255,
     }),
 
-    list.fields.addText("DocDepartment", {
+    list.fields.addText(DOCUMENT_COLUMNS.DEPARTMENT, {
       MaxLength: 255,
     }),
 
-    list.fields.addNumber("DocumentId"),
+    list.fields.addNumber(DOCUMENT_RELATION_COLUMNS.DOCUMENT_ID),
 
-    list.fields.addNumber("ParentDocumentId"),
+    list.fields.addNumber(DOCUMENT_RELATION_COLUMNS.PARENT_DOCUMENT_ID),
   ]);
 };
 

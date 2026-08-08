@@ -1,12 +1,11 @@
-import { SPHttpClient } from "@microsoft/sp-http";
 import { SPFI } from "@pnp/sp";
 import {
   IDocumentChildrenInfo,
   IEditDocumentFormData,
 } from "../../types/adminTypes";
 import { getDocumentLevel } from "./DocumentService";
-import { WebPartContext } from "@microsoft/sp-webpart-base";
 import { DeleteFromList, UpdateList } from "./ListsService";
+import { DOCUMENT_COLUMNS } from "../../constants/columns";
 
 export const DeleteDocument = async (
   sp: SPFI,
@@ -33,13 +32,15 @@ export const validateDocumentMetadata = async (
   const [docNameItems, docReferenceItems] = await Promise.all([
     library.items
       .select("Id")
-      .filter(`DocName eq '${safeDocName}' and Id ne ${excludeItemId}`)
+      .filter(
+        `${DOCUMENT_COLUMNS.DOCUMENT_NAME} eq '${safeDocName}' and Id ne ${excludeItemId}`,
+      )
       .top(1)(),
 
     library.items
       .select("Id")
       .filter(
-        `DocReference eq '${safeDocReference}' and Id ne ${excludeItemId}`,
+        `${DOCUMENT_COLUMNS.DOCUMENT_REFERENCE} eq '${safeDocReference}' and Id ne ${excludeItemId}`,
       )
       .top(1)(),
   ]);
@@ -76,7 +77,7 @@ export const validateDocumentParent = async (
     const parentDocument: any = await sp.web.lists
       .getByTitle(libraryName)
       .items.getById(currentId)
-      .select("Id", "DocParent")();
+      .select("Id", DOCUMENT_COLUMNS.PARENT_DOCUMENT)();
 
     currentId = parentDocument.DocParent ?? null;
   }
@@ -110,14 +111,14 @@ export const EditDocument = async (
     .getByTitle(libraryName)
     .items.getById(docDataForm.Id)
     .update({
-      DocName: docDataForm.docName,
-      DocReference: docDataForm.docReference,
-      DocCategory: docDataForm.docCategory,
-      DocDepartment: docDataForm.docDepartment,
-      DocType: docDataForm.docType,
-      DocParent: docDataForm.docParent,
-      DocOwnerId: docDataForm.docOwnerId,
-      DocKeywords: JSON.stringify(
+      [DOCUMENT_COLUMNS.DOCUMENT_NAME]: docDataForm.docName,
+      [DOCUMENT_COLUMNS.DOCUMENT_REFERENCE]: docDataForm.docReference,
+      [DOCUMENT_COLUMNS.CATEGORY]: docDataForm.docCategory,
+      [DOCUMENT_COLUMNS.DEPARTMENT]: docDataForm.docDepartment,
+      [DOCUMENT_COLUMNS.DOCUMENT_TYPE]: docDataForm.docType,
+      [DOCUMENT_COLUMNS.PARENT_DOCUMENT]: docDataForm.docParent,
+      [`${DOCUMENT_COLUMNS.OWNER}Id`]: docDataForm.docOwnerId,
+      [DOCUMENT_COLUMNS.KEYWORDS]: JSON.stringify(
         docDataForm.docKeywords
           .split(/\s+/)
           .map((keyword: string) => keyword.trim())
@@ -177,8 +178,8 @@ export const checkDocumentHasChildren = async (
   const loadChildren = async (parentId: number): Promise<void> => {
     const items = await sp.web.lists
       .getByTitle(libraryName)
-      .items.filter(`DocParent eq ${parentId}`)
-      .select("Id", "DocName")();
+      .items.filter(`${DOCUMENT_COLUMNS.PARENT_DOCUMENT} eq ${parentId}`)
+      .select("Id", DOCUMENT_COLUMNS.DOCUMENT_NAME)();
 
     for (const item of items) {
       children.push({
@@ -335,16 +336,19 @@ export const ReplaceDocument = async (
   const item = await file.listItemAllFields();
 
   const fields = [
-    "DocReference",
-    "DocName",
-    "DocType",
-    "DocParent",
-    "DocCategory",
-    "DocDepartment",
-    "DocKeywords",
+    DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
+    DOCUMENT_COLUMNS.DOCUMENT_NAME,
+    DOCUMENT_COLUMNS.DOCUMENT_TYPE,
+    DOCUMENT_COLUMNS.PARENT_DOCUMENT,
+    DOCUMENT_COLUMNS.CATEGORY,
+    DOCUMENT_COLUMNS.DEPARTMENT,
+    DOCUMENT_COLUMNS.KEYWORDS,
   ];
 
-  const formValues = fields
+  const formValues: {
+    FieldName: string;
+    FieldValue: string;
+  }[] = fields
     .filter((field) => item[field] !== undefined)
     .map((field) => ({
       FieldName: field,
@@ -353,7 +357,7 @@ export const ReplaceDocument = async (
 
   if (item.DocOwner?.EMail) {
     formValues.push({
-      FieldName: "DocOwner",
+      FieldName: DOCUMENT_COLUMNS.OWNER,
       FieldValue: item.DocOwner.EMail,
     });
   }
