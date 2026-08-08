@@ -1,0 +1,72 @@
+.editSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.categoriesUl {
+  list-style-type: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.categoryItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+}
+
+.closeButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--color-primary);
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  color: var(--color-primary-hover);
+}
+
+.addCategoryDiv {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.editButtons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.confirmRemoveSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.errorMessage {
+  color: var(--color-danger);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.addCatSection {
+  display: flex;
+  flex-direction: column;
+}

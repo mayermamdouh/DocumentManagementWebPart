@@ -1,0 +1,60 @@
+.fileInputWrapper {
+  width: 100%;
+}
+
+.fileInputLabel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 100px;
+  overflow: hidden;
+  background-color: var(--color-background);
+  border: 2px dotted var(--color-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    border-style 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fileSelected {
+  border-style: solid;
+  border-color: var(--color-success);
+}
+
+.fileInputLabel:hover {
+  border-color: var(--color-success);
+}
+
+.fileInputText {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.fileInputLabel:hover .fileInputButton {
+  background-color: var(--color-primary-hover);
+}
+
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.error {
+  margin-top: 5px;
+  color: var(--color-danger);
+}

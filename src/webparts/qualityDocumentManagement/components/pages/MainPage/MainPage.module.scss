@@ -1,0 +1,101 @@
+@import "~@fluentui/react/dist/sass/References.scss";
+
+.main {
+  width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+.appTitle {
+  margin: 0 0 24px;
+  color: var(--color-text-primary);
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+}
+
+.pageSelector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.pageButton {
+  min-width: 110px;
+}
+
+.pageContent {
+  width: 100%;
+}
+
+.librariesBar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+
+  width: 100%;
+  margin-bottom: 24px;
+
+  border-bottom: 1px solid var(--color-border);
+
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.libraryButton {
+  position: relative;
+
+  flex: 0 0 auto;
+
+  min-width: 100px;
+  max-width: 220px;
+  height: 44px;
+
+  padding: 0 4px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: transparent;
+  color: var(--color-text-secondary);
+
+  border: none;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  white-space: nowrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.libraryButton:hover {
+  color: var(--color-text-primary);
+}
+
+.libraryButton::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  background-color: transparent;
+
+  transition: background-color 0.2s ease;
+}
+
+.activeLibrary::after {
+  background-color: var(--color-primary);
+}

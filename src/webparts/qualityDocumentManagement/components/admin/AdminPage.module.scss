@@ -1,0 +1,17 @@
+.adminSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toolsDiv {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.filtersDiv {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

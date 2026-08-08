@@ -1,0 +1,19 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "useGulp": false,
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "20.20.2",
+    "sdksVersions": {},
+    "version": "1.22.2",
+    "libraryName": "quality-document-management",
+    "libraryId": "9afc8b73-fa02-4a17-abb5-3a7aefd66d91",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionName": "quality-document-management",
+    "solutionShortDescription": "quality-document-management description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "componentType": "webpart"
+  }
+}

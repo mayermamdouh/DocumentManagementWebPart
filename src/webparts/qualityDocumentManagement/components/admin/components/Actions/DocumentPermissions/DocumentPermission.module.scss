@@ -1,0 +1,79 @@
+.container {
+  width: 100%;
+}
+
+.addRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  width: 100%;
+}
+
+.peoplePicker {
+  flex: 6;
+  min-width: 0;
+}
+
+.addButton {
+  flex: 1;
+}
+
+.permissionsSection {
+  margin-top: 24px;
+}
+
+.title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.tableWrapper {
+  width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+  }
+
+  th {
+    font-weight: 600;
+    border-bottom: 1px solid #ddd;
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 1;
+  }
+}
+
+.actionHeader {
+  text-align: right !important;
+}
+
+.actionCell {
+  text-align: right !important;
+}
+
+.emptyState {
+  text-align: center !important;
+  padding: 20px !important;
+  color: #666;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}

@@ -1,0 +1,12 @@
+.versionContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.versionsActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: space-evenly;
+}
