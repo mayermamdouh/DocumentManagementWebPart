@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./MainPage.module.scss";
 import type { IQualityDocumentManagementProps } from "../../IQualityDocumentManagementProps";
 
-import { ensureDocumentLibraryConfiguration } from "../../../services/AdminServices/DocumentLibraryConfiguration";
+import {
+  ensureDocumentCategoriesList,
+  ensureDocumentLibraryConfiguration,
+} from "../../../services/AdminServices/DocumentLibraryConfiguration";
 
 import ConfigurationRequired from "../../common/ConfigurationRequired/ConfigurationRequired";
 import AppLoading from "../../common/AppLoading/Apploading";
@@ -37,8 +40,10 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
   }, [props.libraries]);
 
   const prepareLibraries = useCallback(async (): Promise<void> => {
-    await Promise.all(
-      librariesRef.current.map(async (library) => {
+    const libraries = librariesRef.current;
+
+    const results = await Promise.all(
+      libraries.map(async (library) => {
         const administratorsIds = (library.administrators ?? [])
           .map((item) => item.id)
           .filter((id): id is string => id !== undefined);
@@ -54,8 +59,34 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
           library.title,
         );
 
-        previousAdministratorsRef.current[library.id] = administratorsIds;
+        return {
+          libraryId: library.id,
+          administratorsIds,
+        };
       }),
+    );
+    const previousAllAdministrators = Array.from(
+      new Set(Object.values(previousAdministratorsRef.current).flat()),
+    );
+
+    results.forEach(({ libraryId, administratorsIds }) => {
+      previousAdministratorsRef.current[libraryId] = administratorsIds;
+    });
+
+    const allAdministrators = Array.from(
+      new Set(
+        libraries.flatMap((library) =>
+          (library.administrators ?? [])
+            .map((admin) => admin.id)
+            .filter((id): id is string => id !== undefined),
+        ),
+      ),
+    );
+
+    await ensureDocumentCategoriesList(
+      props.sp,
+      allAdministrators,
+      previousAllAdministrators,
     );
   }, [props.sp]);
 
@@ -84,18 +115,7 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
         const siteOwner = await isCurrentUserSiteAdmin(props.sp);
         setIsSiteAdmin(siteOwner);
 
-        const currentUserLogin =
-          props.context.pageContext.user.loginName.toLowerCase();
-
-        const isLibraryAdministrator = props.libraries.some((library) =>
-          (library.administrators ?? []).some(
-            (admin) => admin.id?.toLowerCase() === currentUserLogin,
-          ),
-        );
-
-        const isAdmin = siteOwner || isLibraryAdministrator;
-
-        if (isAdmin) {
+        if (siteOwner) {
           await prepareLibraries();
         }
 
@@ -120,16 +140,49 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
     setError,
   ]);
 
-  const currentLibrary = props.libraries.find(
+  const currentUserLogin =
+    props.context.pageContext.user.loginName.toLowerCase();
+
+  const isLibraryAdministrator = props.libraries.some((library) =>
+    (library.administrators ?? []).some(
+      (admin) => admin.login?.toLowerCase() === currentUserLogin,
+    ),
+  );
+
+  const visibleLibraries = isSiteAdmin
+    ? props.libraries
+    : isLibraryAdministrator
+      ? props.libraries.filter((library) =>
+          (library.administrators ?? []).some(
+            (admin) => admin.login?.toLowerCase() === currentUserLogin,
+          ),
+        )
+      : props.libraries;
+
+  useEffect(() => {
+    if (visibleLibraries.length === 0) {
+      setActiveLibraryId("");
+      return;
+    }
+
+    const activeLibraryExists = visibleLibraries.some(
+      (library) => library.id === activeLibraryId,
+    );
+
+    if (!activeLibraryExists) {
+      setActiveLibraryId(visibleLibraries[0].id);
+    }
+  }, [visibleLibraries, activeLibraryId]);
+
+  const currentLibrary = visibleLibraries.find(
     (library) => library.id === activeLibraryId,
   );
 
-  const isLibraryAdministrator =
-    currentLibrary?.administrators?.some(
-      (admin) => admin.login === props.context.pageContext.user.loginName,
-    ) ?? false;
-
-  const isAdmin = isSiteAdmin || isLibraryAdministrator;
+  const isCurrentLibraryAdministrator =
+    isSiteAdmin ||
+    (currentLibrary?.administrators ?? []).some(
+      (admin) => admin.login?.toLowerCase() === currentUserLogin,
+    );
 
   if (!hasLibraries) {
     return <ConfigurationRequired hasLibraries={false} />;
@@ -159,7 +212,7 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
           onClick={() => setActivePage("UserPage")}
         />
 
-        {isAdmin && (
+        {isCurrentLibraryAdministrator && (
           <AppButton
             text="Admin"
             fullWidth={true}
@@ -172,7 +225,7 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
       </div>
 
       <section className={styles.librariesBar}>
-        {props.libraries.map((library) => (
+        {visibleLibraries.map((library) => (
           <button
             key={library.id}
             type="button"
@@ -195,19 +248,13 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
         {activePage === "UserPage" ? (
           <UserPage
             activeLibraryId={activeLibraryId}
-            libraryName={
-              props.libraries.find((item) => item.id === activeLibraryId)
-                ?.title ?? ""
-            }
+            libraryName={currentLibrary?.title ?? ""}
           />
         ) : (
-          isAdmin && (
+          isCurrentLibraryAdministrator && (
             <AdminPage
               activeLibraryId={activeLibraryId}
-              libraryName={
-                props.libraries.find((item) => item.id === activeLibraryId)
-                  ?.title ?? ""
-              }
+              libraryName={currentLibrary?.title ?? ""}
             />
           )
         )}

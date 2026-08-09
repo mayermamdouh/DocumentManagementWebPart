@@ -29,38 +29,32 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
   const [openCategorySetting, setOpenCategorySetting] =
     useState<boolean>(false);
 
-  const [openAddNewDoc, setOpenAddNewDoc] =
-    useState<boolean>(false);
+  const [openAddNewDoc, setOpenAddNewDoc] = useState<boolean>(false);
 
-  const [documents, setDocuments] =
-    useState<ILibraryDocument[]>([]);
+  const [documents, setDocuments] = useState<ILibraryDocument[]>([]);
 
-  const [loading, setLoading] =
-    useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const [valueCategoryFilter, setValueCategoryFilter] =
-    useState<string | null>(null);
+  const [valueCategoryFilter, setValueCategoryFilter] = useState<string | null>(
+    null,
+  );
 
-  const [valueTypeFilter, setValueTypeFilter] =
-    useState<string | null>(null);
+  const [valueTypeFilter, setValueTypeFilter] = useState<string | null>(null);
 
   const fetchDocuments = useCallback(async () => {
     setLoading(true);
 
     try {
-      const documents = await getLibraryDocuemnts(
-        sp,
-        activeLibraryId,
-      );
+      const documents = await getLibraryDocuemnts(sp, activeLibraryId);
 
       setDocuments(documents);
     } catch (error) {
-      console.error(
-        "Failed to fetch library documents:",
-        error,
+      console.error("Failed to fetch library documents:", error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to get Library Docuemnts",
       );
-
-      setError(error);
     } finally {
       setLoading(false);
     }
@@ -75,9 +69,7 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
   }, [fetchDocuments]);
 
   const filteredDocuments = documents.filter((doc) => {
-    const searchTerm = searchValue
-      .trim()
-      .toLowerCase();
+    const searchTerm = searchValue.trim().toLowerCase();
 
     const matchesSearch =
       !searchTerm ||
@@ -86,18 +78,11 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
       doc.DocDepartment?.toLowerCase().includes(searchTerm);
 
     const matchesCategory =
-      !valueCategoryFilter ||
-      doc.DocCategory === valueCategoryFilter;
+      !valueCategoryFilter || doc.DocCategory === valueCategoryFilter;
 
-    const matchesType =
-      !valueTypeFilter ||
-      doc.DocType === valueTypeFilter;
+    const matchesType = !valueTypeFilter || doc.DocType === valueTypeFilter;
 
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesType
-    );
+    return matchesSearch && matchesCategory && matchesType;
   });
 
   const handleExportExcel = () => {

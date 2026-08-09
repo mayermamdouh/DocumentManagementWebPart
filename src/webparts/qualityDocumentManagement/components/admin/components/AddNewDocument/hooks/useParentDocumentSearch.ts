@@ -88,6 +88,11 @@ export const useParentDocumentSearch = ({
         }
 
         console.error("Error searching parent documents:", error);
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Error searching parent documents",
+          );
 
         setParentDocuments([]);
         setError(error);

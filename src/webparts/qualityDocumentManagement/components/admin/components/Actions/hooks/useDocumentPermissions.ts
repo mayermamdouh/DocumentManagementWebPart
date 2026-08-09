@@ -156,7 +156,11 @@ export const useDocumentPermissions = ({
       setSelectedPeople([]);
     } catch (error) {
       console.error("Failed to load document permissions:", error);
-      setError(error);
+       setError(
+         error instanceof Error
+           ? error.message
+           : "Failed to load document permissions",
+       );
     } finally {
       setIsLoading(false);
     }
@@ -179,6 +183,11 @@ export const useDocumentPermissions = ({
       await loadPermissions();
     } catch (error) {
       console.error("Failed to save document permissions:", error);
+       setError(
+         error instanceof Error
+           ? error.message
+           : "Failed to save document permissions",
+       );
       setError(error);
     } finally {
       setIsLoading(false);

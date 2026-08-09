@@ -46,7 +46,11 @@ export const useUserDocuments = ({
       console.error("Failed to search user documents:", error);
 
       setDocuments([]);
-      setError(error);
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to search user documents",
+      );
     } finally {
       setLoading(false);
     }

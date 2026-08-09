@@ -9,6 +9,7 @@ import { useSharePoint } from "../../../../contexts/SharePointContext";
 import { useNotification } from "../../../../contexts/NotificationContext";
 import { ICategory } from "../../../../types/commonTypes";
 import { useEditCategories } from "./hooks/useEditCategories";
+import AppLoading from "../../../common/AppLoading/Apploading";
 
 const EditCatergoties = ({ open, setOpen }: IEditCatergoties) => {
   const { sp } = useSharePoint();
@@ -35,6 +36,7 @@ const EditCatergoties = ({ open, setOpen }: IEditCatergoties) => {
     confirmRemoveCategory,
     cancelRemoveCategory,
     handleSaveCategories,
+    isLoading,
   } = useEditCategories({
     sp,
     oldCategories,
@@ -51,53 +53,58 @@ const EditCatergoties = ({ open, setOpen }: IEditCatergoties) => {
   return (
     <>
       <AppPopup Title="Edit Categories values" onClose={() => setOpen(false)}>
-        <section className={styles.editSection}>
-          <ul className={styles.categoriesUl}>
-            {visibleCategories.map((category) => (
-              <li key={category.Id} className={styles.categoryItem}>
-                {category.Title}
+        {isLoading ? (
+          <AppLoading />
+        ) : (
+          <section className={styles.editSection}>
+            <ul className={styles.categoriesUl}>
+              {visibleCategories.map((category) => (
+                <li key={category.Id} className={styles.categoryItem}>
+                  {category.Title}
 
-                <button
-                  type="button"
-                  className={styles.closeButton}
-                  onClick={() => handleRemoveCategory(category)}
-                >
-                  ×
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <button
+                    type="button"
+                    className={styles.closeButton}
+                    onClick={() => handleRemoveCategory(category)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
 
-          <div className={styles.addCatSection}>
-            <AppInput
-              label="Add New Category"
-              value={newCategory}
-              onChange={handleNewCategoryChange}
-              errorMessage={categoryError ? categoryError : undefined}
-            />
+            <div className={styles.categoryInput}>
+              <AppInput
+                label="Add New Category"
+                value={newCategory}
+                onChange={handleNewCategoryChange}
+                errorMessage={categoryError ? categoryError : undefined}
+              />
+              <div className={styles.addButton}>
+                <AppButton
+                  text="Add"
+                  variant="success"
+                  onClick={handleAddNewCategory}
+                />
+              </div>
+            </div>
+            <div className={styles.editButtons}>
+              <AppButton
+                fullWidth
+                text="Save"
+                onClick={handleSaveCategories}
+                disabled={isSaveDisabled}
+              />
 
-            <AppButton
-              text="Add"
-              variant="success"
-              onClick={handleAddNewCategory}
-            />
-          </div>
-          <div className={styles.editButtons}>
-            <AppButton
-              fullWidth
-              text="Save"
-              onClick={handleSaveCategories}
-              disabled={isSaveDisabled}
-            />
-
-            <AppButton
-              fullWidth
-              text="Cancel"
-              variant="secondary"
-              onClick={() => setOpen(false)}
-            />
-          </div>
-        </section>
+              <AppButton
+                fullWidth
+                text="Cancel"
+                variant="secondary"
+                onClick={() => setOpen(false)}
+              />
+            </div>
+          </section>
+        )}
       </AppPopup>
 
       {pendingRemoveCategory && (

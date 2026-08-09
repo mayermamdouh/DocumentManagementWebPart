@@ -124,6 +124,7 @@ export default class QualityDocumentManagementWebPart extends BaseClientSideWebP
       }));
     } catch (error) {
       console.error("Failed to load document libraries", error);
+     
 
       this._availableLibraries = [];
     }

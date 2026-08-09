@@ -60,11 +60,12 @@
   margin-top: 4px;
 }
 
-.addCatSection {
+.categoryInput {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-
+.addButton {
+  margin-top: 22px;
+}

@@ -95,160 +95,161 @@ const EditAndViewDocumentForm = ({
         <AppLoading />
       ) : (
         <>
-          {" "}
-          <div className={styles.inputs}>
-            <AppInput
-              label="Document Name"
-              required
-              value={formData.docName}
-              disabled={isViewMode}
-              onChange={(value) => handleChangeInput("docName", value)}
-              errorMessage={
-                isDocNameExists
-                  ? "A document with this name already exists."
-                  : undefined
-              }
-            />
-
-            <AppInput
-              label="Document Reference"
-              required
-              value={formData.docReference}
-              disabled={isViewMode}
-              onChange={(value) => handleChangeInput("docReference", value)}
-              errorMessage={
-                isDocReferenceExists
-                  ? "A document with this reference already exists."
-                  : !isValidDocumentReference
-                    ? "Document Reference must follow the format: PO-CPM-001"
+          <div className={styles.formContent}>
+            <div className={styles.inputs}>
+              <AppInput
+                label="Document Name"
+                required
+                value={formData.docName}
+                disabled={isViewMode}
+                onChange={(value) => handleChangeInput("docName", value)}
+                errorMessage={
+                  isDocNameExists
+                    ? "A document with this name already exists."
                     : undefined
-              }
-            />
+                }
+              />
 
-            <PeoplePicker
-              context={context as any}
-              webAbsoluteUrl={context.pageContext.web.absoluteUrl}
-              titleText="Owner"
-              personSelectionLimit={1}
-              showtooltip={true}
-              required={true}
-              ensureUser={true}
-              resolveDelay={200}
-              principalTypes={[
-                PrincipalType.User,
-                PrincipalType.SharePointGroup,
-                PrincipalType.SecurityGroup,
-                PrincipalType.DistributionList,
-              ]}
-              defaultSelectedUsers={
-                document.DocOwner?.EMail ? [document.DocOwner.EMail] : []
-              }
-              disabled={isViewMode}
-              onChange={handleOwnerChange}
-            />
+              <AppInput
+                label="Document Reference"
+                required
+                value={formData.docReference}
+                disabled={isViewMode}
+                onChange={(value) => handleChangeInput("docReference", value)}
+                errorMessage={
+                  isDocReferenceExists
+                    ? "A document with this reference already exists."
+                    : !isValidDocumentReference
+                      ? "Document Reference must follow the format: PO-CPM-001"
+                      : undefined
+                }
+              />
 
-            <AppInput
-              label="Department"
-              required
-              value={formData.docDepartment}
-              disabled={isViewMode}
-              onChange={(value) => handleChangeInput("docDepartment", value)}
-            />
+              <PeoplePicker
+                context={context as any}
+                webAbsoluteUrl={context.pageContext.web.absoluteUrl}
+                titleText="Owner"
+                personSelectionLimit={1}
+                showtooltip={true}
+                required={true}
+                ensureUser={true}
+                resolveDelay={200}
+                principalTypes={[
+                  PrincipalType.User,
+                  PrincipalType.SharePointGroup,
+                  PrincipalType.SecurityGroup,
+                  PrincipalType.DistributionList,
+                ]}
+                defaultSelectedUsers={
+                  document.DocOwner?.EMail ? [document.DocOwner.EMail] : []
+                }
+                disabled={isViewMode}
+                onChange={handleOwnerChange}
+              />
 
-            <AppDropdown
-              required
-              label="Document Type"
-              value={formData.docType}
-              disabled={isViewMode}
-              onChange={handleDocumentTypeChange}
-              options={[
-                {
-                  key: "Parent",
-                  text: "Parent",
-                },
-                {
-                  key: "Child",
-                  text: "Child",
-                },
-              ]}
-            />
+              <AppInput
+                label="Department"
+                required
+                value={formData.docDepartment}
+                disabled={isViewMode}
+                onChange={(value) => handleChangeInput("docDepartment", value)}
+              />
 
-            {isChildDocument && (
-              <div className={styles.parentSearchWrapper}>
-                {isViewMode ? (
-                  <AppInput
-                    label="Parent Document"
-                    value={document.DocParentName || "-"}
-                    disabled
-                  />
-                ) : (
-                  <>
+              <AppDropdown
+                required
+                label="Document Type"
+                value={formData.docType}
+                disabled={isViewMode}
+                onChange={handleDocumentTypeChange}
+                options={[
+                  {
+                    key: "Parent",
+                    text: "Parent",
+                  },
+                  {
+                    key: "Child",
+                    text: "Child",
+                  },
+                ]}
+              />
+
+              {isChildDocument && (
+                <div className={styles.parentSearchWrapper}>
+                  {isViewMode ? (
                     <AppInput
                       label="Parent Document"
-                      required
-                      placeholder="Search for parent document..."
-                      value={parentSearch}
-                      onChange={(value) => {
-                        setIsEditingParent(true);
-                        setParentSearch(value);
-                        handleParentSearchChange(value);
-                      }}
+                      value={document.DocParentName || "-"}
+                      disabled
                     />
+                  ) : (
+                    <>
+                      <AppInput
+                        label="Parent Document"
+                        required
+                        placeholder="Search for parent document..."
+                        value={parentSearch}
+                        onChange={(value) => {
+                          setIsEditingParent(true);
+                          setParentSearch(value);
+                          handleParentSearchChange(value);
+                        }}
+                      />
 
-                    {isSearchingParent && isEditingParent && <AppLoading />}
+                      {isSearchingParent && isEditingParent && <AppLoading />}
 
-                    {isEditingParent &&
-                      !isSearchingParent &&
-                      !selectedParent &&
-                      parentSearch.trim() &&
-                      parentDocuments.length > 0 && (
-                        <div className={styles.parentResults}>
-                          {parentDocuments.map((parentDocument) => (
-                            <button
-                              type="button"
-                              key={parentDocument.Id}
-                              className={styles.parentResultItem}
-                              onClick={() => {
-                                selectParent(parentDocument);
-                                setParent(parentDocument.Id);
-                              }}
-                            >
-                              {parentDocument.DocName}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                      {isEditingParent &&
+                        !isSearchingParent &&
+                        !selectedParent &&
+                        parentSearch.trim() &&
+                        parentDocuments.length > 0 && (
+                          <div className={styles.parentResults}>
+                            {parentDocuments.map((parentDocument) => (
+                              <button
+                                type="button"
+                                key={parentDocument.Id}
+                                className={styles.parentResultItem}
+                                onClick={() => {
+                                  selectParent(parentDocument);
+                                  setParent(parentDocument.Id);
+                                }}
+                              >
+                                {parentDocument.DocName}
+                              </button>
+                            ))}
+                          </div>
+                        )}
 
-                    {isEditingParent &&
-                      !isSearchingParent &&
-                      !selectedParent &&
-                      parentSearch.trim() &&
-                      parentDocuments.length === 0 && (
-                        <div className={styles.noParentResults}>
-                          No parent documents found.
-                        </div>
-                      )}
-                  </>
-                )}
-              </div>
-            )}
+                      {isEditingParent &&
+                        !isSearchingParent &&
+                        !selectedParent &&
+                        parentSearch.trim() &&
+                        parentDocuments.length === 0 && (
+                          <div className={styles.noParentResults}>
+                            No parent documents found.
+                          </div>
+                        )}
+                    </>
+                  )}
+                </div>
+              )}
 
-            <AppDropdown
-              required
-              label="Category"
-              value={formData.docCategory}
-              disabled={isViewMode}
-              onChange={(value) => handleChangeInput("docCategory", value)}
-              options={categoryOptions}
-            />
+              <AppDropdown
+                required
+                label="Category"
+                value={formData.docCategory}
+                disabled={isViewMode}
+                onChange={(value) => handleChangeInput("docCategory", value)}
+                options={categoryOptions}
+              />
 
-            <AppTextarea
-              label="Keywords"
-              placeholder="Separate keywords with spaces."
-              value={formData.docKeywords}
-              disabled={isViewMode}
-              onChange={(value) => handleChangeInput("docKeywords", value)}
-            />
+              <AppTextarea
+                label="Keywords"
+                placeholder="Separate keywords with spaces."
+                value={formData.docKeywords}
+                disabled={isViewMode}
+                onChange={(value) => handleChangeInput("docKeywords", value)}
+              />
+            </div>
           </div>
           <div className={styles.actions}>
             {mode === "edit" && (

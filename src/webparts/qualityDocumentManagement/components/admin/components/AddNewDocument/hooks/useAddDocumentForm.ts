@@ -3,6 +3,7 @@ import { useCategoryContext } from "../../../../../contexts/CategoryContext";
 import { IQualityDocumentForm } from "../../../../../types/adminTypes";
 import { validateDocument } from "../../../../../services/AdminServices/DocumentService";
 import { useSharePoint } from "../../../../../contexts/SharePointContext";
+import { useNotification } from "../../../../../contexts/NotificationContext";
 
 interface IUseDocumentForm {
   libraryName: string;
@@ -10,6 +11,7 @@ interface IUseDocumentForm {
 
 export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
   const { sp } = useSharePoint();
+  const { setError } = useNotification();
   const { categoriesMap } = useCategoryContext();
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState({
@@ -62,6 +64,11 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
         setValidationResult(result);
       } catch (error) {
         console.error("Failed to validate document:", error);
+         setError(
+           error instanceof Error
+             ? error.message
+             : "Failed to validate document",
+         );
       } finally {
         setIsValidating(false);
       }

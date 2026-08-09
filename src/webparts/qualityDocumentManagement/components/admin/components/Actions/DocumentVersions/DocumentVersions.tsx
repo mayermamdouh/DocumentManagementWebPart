@@ -9,6 +9,7 @@ import {
 import { GetFileVersions } from "../../../../../services/AdminServices/DocumentVersions";
 import AppLoading from "../../../../common/AppLoading/Apploading";
 import DocumentVersionsActions from "./components/DocumentVersionsActions/DocumentVersionsActions";
+import { useNotification } from "../../../../../contexts/NotificationContext";
 
 const DocumentVersions = ({
   serverRelativeUrl,
@@ -16,6 +17,7 @@ const DocumentVersions = ({
   isRejected,
 }: IDocumentVersionsProps) => {
   const { sp } = useSharePoint();
+  const {setError} = useNotification();
 
   const [versions, setVersions] = useState<IFileVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,6 +32,11 @@ const DocumentVersions = ({
       setVersions(result);
     } catch (error) {
       console.error("Failed to load document versions:", error);
+       setError(
+         error instanceof Error
+           ? error.message
+           : "Failed to load document versions",
+       );
     } finally {
       setIsLoading(false);
     }

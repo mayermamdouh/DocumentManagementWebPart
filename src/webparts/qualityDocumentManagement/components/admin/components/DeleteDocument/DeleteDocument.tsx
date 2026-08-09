@@ -20,7 +20,7 @@ const DeleteDocument = ({
   onRefreshDocuments,
 }: IDocumentDeleteProps) => {
   const { sp } = useSharePoint();
-  const { setMessage } = useNotification();
+  const { setMessage, setError } = useNotification();
   const [childrenInfo, setChildrenInfo] =
     useState<IDocumentChildrenInfo | null>(null);
 
@@ -56,6 +56,9 @@ const DeleteDocument = ({
       );
     } catch (error) {
       console.error("Error in deleating documents", error);
+      setError(
+        error instanceof Error ? error.message : "Error in deleating documents",
+      );
     } finally {
       setLoading(false);
       onClose();

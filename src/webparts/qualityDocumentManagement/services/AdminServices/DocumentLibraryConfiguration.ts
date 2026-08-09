@@ -1,6 +1,9 @@
 import { SPFI } from "@pnp/sp";
 
-import { DOCUMENT_COLUMNS, DOCUMENT_RELATION_COLUMNS } from "../../constants/columns";
+import {
+  DOCUMENT_COLUMNS,
+  DOCUMENT_RELATION_COLUMNS,
+} from "../../constants/columns";
 
 export const ensureDocumentLibraryColumns = async (
   sp: SPFI,
@@ -163,6 +166,8 @@ export const ensureDocumentLibraryAdministrators = async (
 export const ensureDocumentRelationsList = async (
   sp: SPFI,
   libraryName: string,
+  administrators: string[],
+  previousAdministrators: string[],
 ): Promise<void> => {
   const listTitle = `${libraryName}Relations`;
 
@@ -170,35 +175,143 @@ export const ensureDocumentRelationsList = async (
     (await sp.web.lists.filter(`Title eq '${listTitle}'`).select("Id")())
       .length > 0;
 
-  if (exists) {
-    return;
-  }
+  if (!exists) {
+    await sp.web.lists.add(listTitle);
 
-  await sp.web.lists.add(listTitle);
+    const list = sp.web.lists.getByTitle(listTitle);
+
+    await Promise.all([
+      list.fields.addText(DOCUMENT_COLUMNS.DOCUMENT_REFERENCE, {
+        MaxLength: 255,
+      }),
+
+      list.fields.addText(DOCUMENT_COLUMNS.DOCUMENT_NAME, {
+        MaxLength: 255,
+      }),
+
+      list.fields.addText(DOCUMENT_COLUMNS.CATEGORY, {
+        MaxLength: 255,
+      }),
+
+      list.fields.addText(DOCUMENT_COLUMNS.DEPARTMENT, {
+        MaxLength: 255,
+      }),
+
+      list.fields.addNumber(DOCUMENT_RELATION_COLUMNS.DOCUMENT_ID),
+
+      list.fields.addNumber(DOCUMENT_RELATION_COLUMNS.PARENT_DOCUMENT_ID),
+    ]);
+  }
 
   const list = sp.web.lists.getByTitle(listTitle);
 
-  await Promise.all([
-    list.fields.addText(DOCUMENT_COLUMNS.DOCUMENT_REFERENCE, {
-      MaxLength: 255,
-    }),
+  const listInfo = (await list.select(
+    "HasUniqueRoleAssignments",
+  )()) as unknown as {
+    HasUniqueRoleAssignments: boolean;
+  };
 
-    list.fields.addText(DOCUMENT_COLUMNS.DOCUMENT_NAME, {
-      MaxLength: 255,
-    }),
+  if (!listInfo.HasUniqueRoleAssignments) {
+    await list.breakRoleInheritance(true, false);
+  }
 
-    list.fields.addText(DOCUMENT_COLUMNS.CATEGORY, {
-      MaxLength: 255,
-    }),
+  const contributeRole = await sp.web.roleDefinitions.getByName("Contribute")();
 
-    list.fields.addText(DOCUMENT_COLUMNS.DEPARTMENT, {
-      MaxLength: 255,
-    }),
+  for (const loginName of administrators) {
+    const user = await sp.web.ensureUser(loginName);
 
-    list.fields.addNumber(DOCUMENT_RELATION_COLUMNS.DOCUMENT_ID),
+    const bindings = await list.roleAssignments
+      .getById(user.Id)
+      .bindings()
+      .catch(() => []);
 
-    list.fields.addNumber(DOCUMENT_RELATION_COLUMNS.PARENT_DOCUMENT_ID),
-  ]);
+    const hasContribute = bindings.some(
+      (role: any) => role.Id === contributeRole.Id,
+    );
+
+    if (!hasContribute) {
+      await list.roleAssignments.add(user.Id, contributeRole.Id);
+    }
+  }
+
+  const removedAdministrators = previousAdministrators.filter(
+    (previousAdmin) => !administrators.includes(previousAdmin),
+  );
+
+  for (const loginName of removedAdministrators) {
+    try {
+      const user = await sp.web.ensureUser(loginName);
+      await list.roleAssignments.remove(user.Id, contributeRole.Id);
+    } catch (error) {
+      console.warn(
+        `Failed to remove Relations permissions for ${loginName}`,
+        error,
+      );
+    }
+  }
+};
+
+export const ensureDocumentCategoriesList = async (
+  sp: SPFI,
+  administrators: string[],
+  previousAdministrators: string[],
+): Promise<void> => {
+  const listTitle = "DocumentCategories";
+
+  const lists = await sp.web.lists
+    .filter(`Title eq '${listTitle}'`)
+    .select("Id")();
+
+  if (lists.length === 0) {
+    await sp.web.lists.add(listTitle);
+  }
+
+  const list = sp.web.lists.getByTitle(listTitle);
+
+  const listInfo = (await list.select(
+    "HasUniqueRoleAssignments",
+  )()) as unknown as {
+    HasUniqueRoleAssignments: boolean;
+  };
+
+  if (!listInfo.HasUniqueRoleAssignments) {
+    await list.breakRoleInheritance(true, false);
+  }
+
+  const contributeRole = await sp.web.roleDefinitions.getByName("Contribute")();
+
+  for (const loginName of administrators) {
+    const user = await sp.web.ensureUser(loginName);
+
+    const bindings = await list.roleAssignments
+      .getById(user.Id)
+      .bindings()
+      .catch(() => []);
+
+    const hasContribute = bindings.some(
+      (role: any) => role.Id === contributeRole.Id,
+    );
+
+    if (!hasContribute) {
+      await list.roleAssignments.add(user.Id, contributeRole.Id);
+    }
+  }
+
+  const removedAdministrators = previousAdministrators.filter(
+    (previousAdmin) => !administrators.includes(previousAdmin),
+  );
+
+  for (const loginName of removedAdministrators) {
+    try {
+      const user = await sp.web.ensureUser(loginName);
+      await list.roleAssignments.remove(user.Id, contributeRole.Id);
+    } catch (error) {
+      console.warn(
+        `Failed to remove category permissions for ${loginName}`,
+        error,
+      );
+    }
+  }
 };
 
 export const ensureDocumentLibraryConfiguration = async (
@@ -211,7 +324,12 @@ export const ensureDocumentLibraryConfiguration = async (
   await ensureDocumentLibraryColumns(sp, libraryId);
 
   await ensureDocumentLibraryVersioning(sp, libraryId);
-  await ensureDocumentRelationsList(sp, libraryName);
+  await ensureDocumentRelationsList(
+    sp,
+    libraryName,
+    administrators,
+    previousAdministrators,
+  );
 
   await ensureDocumentLibraryAdministrators(
     sp,

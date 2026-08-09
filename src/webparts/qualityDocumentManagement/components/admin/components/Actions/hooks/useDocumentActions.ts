@@ -66,6 +66,11 @@ export const useDocumentActions = ({
         setIsDocReferenceExists(validation.docReferenceExists);
       } catch (error) {
         console.error("Failed to validate document metadata:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to validate document metadata",
+        );
       } finally {
         setIsValidating(false);
       }
@@ -91,7 +96,9 @@ export const useDocumentActions = ({
       await onRefresh();
     } catch (error) {
       console.error("Failed to edit document:", error);
-      setError(error);
+      setError(
+        error instanceof Error ? error.message : "Failed to edit document",
+      );
     } finally {
       onClose();
       setIsValidating(false);

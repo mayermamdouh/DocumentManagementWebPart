@@ -40,7 +40,9 @@ export const CategoryProvider = ({ children }: ICategoryProviderProps) => {
       setCategoriesMap(categoryMap);
     } catch (error) {
       console.error("Failed to load categories", error);
-      setError(error);
+      setError(
+        error instanceof Error ? error.message : "Failed to load categories",
+      );
     }
   }, [sp, setError]);
 

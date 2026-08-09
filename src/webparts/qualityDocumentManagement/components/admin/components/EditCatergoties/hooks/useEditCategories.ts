@@ -30,7 +30,7 @@ export const useEditCategories = ({
   const [librariesContentCategory, setLibrariesContentCategory] = useState<
     string[]
   >([]);
-
+  const [isLoading, setIsLoading] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [addedCategories, setAddedCategories] = useState<ICategory[]>([]);
   const [removedCategoryIds, setRemovedCategoryIds] = useState<number[]>([]);
@@ -161,6 +161,7 @@ export const useEditCategories = ({
   };
 
   const handleSaveCategories = async () => {
+    setIsLoading(true);
     try {
       await UpdateCategories(
         sp,
@@ -178,11 +179,14 @@ export const useEditCategories = ({
       setError(
         error instanceof Error ? error.message : "Failed to update categories.",
       );
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isSaveDisabled =
-    addedCategories.length === 0 && removedCategoryIds.length === 0;
+    const isSaveDisabled =
+      isLoading ||
+      (addedCategories.length === 0 && removedCategoryIds.length === 0);
 
   return {
     newCategory,
@@ -198,5 +202,6 @@ export const useEditCategories = ({
     confirmRemoveCategory,
     cancelRemoveCategory,
     handleSaveCategories,
+    isLoading,
   };
 };
