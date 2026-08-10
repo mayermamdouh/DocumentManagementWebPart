@@ -30,6 +30,7 @@ const DocumentPermission = ({
     sp,
     documentId,
     libraryName,
+    onClose,
   });
 
   return (

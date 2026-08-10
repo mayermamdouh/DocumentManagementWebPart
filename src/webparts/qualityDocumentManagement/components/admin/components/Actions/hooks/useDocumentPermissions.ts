@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { SPFI } from "@pnp/sp";
-import {
-  IPermissionEntry,
-} from "../../../../../types/adminTypes";
+import { IPermissionEntry } from "../../../../../types/adminTypes";
 import {
   getDocumentPermissions,
   getPrincipalType,
@@ -15,14 +13,16 @@ interface IUseDocumentPermissionsProps {
   sp: SPFI;
   documentId: number;
   libraryName: string;
+  onClose: () => void;
 }
 
 export const useDocumentPermissions = ({
   sp,
   documentId,
   libraryName,
+  onClose,
 }: IUseDocumentPermissionsProps) => {
-  const { setError } = useNotification();
+  const { setError, setMessage } = useNotification();
   const [selectedPeople, setSelectedPeople] = useState<any[]>([]);
   const [permissions, setPermissions] = useState<IPermissionEntry[]>([]);
   const [originalPermissions, setOriginalPermissions] = useState<
@@ -156,11 +156,11 @@ export const useDocumentPermissions = ({
       setSelectedPeople([]);
     } catch (error) {
       console.error("Failed to load document permissions:", error);
-       setError(
-         error instanceof Error
-           ? error.message
-           : "Failed to load document permissions",
-       );
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load document permissions",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -180,14 +180,15 @@ export const useDocumentPermissions = ({
         removedPermissions,
       );
 
-      await loadPermissions();
+      setMessage("Document permissions updated successfully.");
+      onClose();
     } catch (error) {
       console.error("Failed to save document permissions:", error);
-       setError(
-         error instanceof Error
-           ? error.message
-           : "Failed to save document permissions",
-       );
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save document permissions",
+      );
       setError(error);
     } finally {
       setIsLoading(false);

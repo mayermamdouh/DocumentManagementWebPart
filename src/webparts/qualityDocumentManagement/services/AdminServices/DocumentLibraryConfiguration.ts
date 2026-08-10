@@ -119,8 +119,10 @@ export const ensureDocumentLibraryAdministrators = async (
 
   const listInfo = (await library.select(
     "HasUniqueRoleAssignments",
+    "Title",
   )()) as unknown as {
     HasUniqueRoleAssignments: boolean;
+    Title: string;
   };
 
   if (!listInfo.HasUniqueRoleAssignments) {
@@ -130,35 +132,63 @@ export const ensureDocumentLibraryAdministrators = async (
   const fullControlRole =
     await sp.web.roleDefinitions.getByName("Full Control")();
 
-  // Add new administrators
+  const groupTitle = `${listInfo.Title} Administrators`;
+
+  let group = await sp.web.siteGroups
+    .getByName(groupTitle)()
+    .catch(() => null);
+
+  if (!group) {
+    group = await sp.web.siteGroups.add({
+      Title: groupTitle,
+      Description: `Administrators for the ${listInfo.Title} document library.`,
+    });
+  }
+
+  const groupId = group.Id;
+  const groupBindings = await library.roleAssignments
+    .getById(groupId)
+    .bindings()
+    .catch(() => []);
+
+  const groupHasFullControl = groupBindings.some(
+    (role: any) => role.Id === fullControlRole.Id,
+  );
+
+  if (!groupHasFullControl) {
+    await library.roleAssignments.add(groupId, fullControlRole.Id);
+  }
+  const sharePointGroup = sp.web.siteGroups.getById(groupId);
+
+  const currentGroupUsers = await sharePointGroup.users.select(
+    "Id",
+    "LoginName",
+  )();
+
   for (const loginName of administrators) {
     const user = await sp.web.ensureUser(loginName);
 
-    const existingRoleAssignments = await library.roleAssignments
-      .getById(user.Id)
-      .bindings()
-      .catch(() => []);
-
-    const hasFullControl = existingRoleAssignments.some(
-      (role: any) => role.Id === fullControlRole.Id,
+    const alreadyMember = currentGroupUsers.some(
+      (member) => member.Id === user.Id,
     );
 
-    if (!hasFullControl) {
-      await library.roleAssignments.add(user.Id, fullControlRole.Id);
+    if (!alreadyMember) {
+      await sharePointGroup.users.add(user.LoginName);
     }
   }
 
   const removedAdministrators = previousAdministrators.filter(
-    (previousAdmin) => !administrators.includes(previousAdmin),
+    (previousAdmin) =>
+      !administrators.some(
+        (admin) => admin.toLowerCase() === previousAdmin.toLowerCase(),
+      ),
   );
 
   for (const loginName of removedAdministrators) {
     try {
-      const user = await sp.web.ensureUser(loginName);
-
-      await library.roleAssignments.remove(user.Id, fullControlRole.Id);
+      await sharePointGroup.users.removeByLoginName(loginName);
     } catch (error) {
-      console.warn(`Failed to remove Full Control from ${loginName}`, error);
+      console.warn(`Failed to remove ${loginName} from ${groupTitle}`, error);
     }
   }
 };

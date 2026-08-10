@@ -9,7 +9,8 @@ export const useVisibleDocumentTree = (
       const visibleChildren = node.children.flatMap(compress);
 
       const isApproved =
-        node.OData__ModerationStatus === undefined ||
+        (node.OData__ModerationStatus === undefined &&
+          visibleChildren.length > 0) ||
         node.OData__ModerationStatus === 0;
 
       if (isApproved) {
