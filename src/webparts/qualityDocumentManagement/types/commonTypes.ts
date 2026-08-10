@@ -1,5 +1,5 @@
 export interface IConfigurationRequiredProps {
-  hasLibraries: boolean;
+  hasLibraries?: boolean;
 }
 
 export interface ICategory {

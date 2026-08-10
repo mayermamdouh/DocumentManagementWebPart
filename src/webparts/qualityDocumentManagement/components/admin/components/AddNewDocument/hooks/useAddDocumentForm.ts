@@ -64,11 +64,11 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
         setValidationResult(result);
       } catch (error) {
         console.error("Failed to validate document:", error);
-         setError(
-           error instanceof Error
-             ? error.message
-             : "Failed to validate document",
-         );
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to validate document",
+        );
       } finally {
         setIsValidating(false);
       }
