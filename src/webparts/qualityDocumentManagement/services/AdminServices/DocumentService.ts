@@ -201,6 +201,10 @@ export const AddNewDocument = async (
       : null;
     return {
       ...document,
+      DocName: document.FileLeafRef,
+      DocKeywords: document.DocKeywords
+        ? JSON.parse(document.DocKeywords).join(" ")
+        : "",
       ApprovalStatus:
         document.OData__ModerationStatus === 0 ? "Approved" : "Draft",
       DocParentName: parentDocument?.FileLeafRef,
