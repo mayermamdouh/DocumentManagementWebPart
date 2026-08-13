@@ -12,9 +12,8 @@ const DocumentVersionsActions = ({
   versions,
   serverRelativeUrl,
   onRefresh,
-  onRefreshDocuments,
+  setDocuments,
 }: IDocumentVersionsActions) => {
-
   const {
     loading,
     canApprove,
@@ -24,10 +23,10 @@ const DocumentVersionsActions = ({
     versionsMessage,
     handleAction,
   } = useDocumentVersionsActions(
+    setDocuments,
     isRejected,
     serverRelativeUrl,
     onRefresh,
-    onRefreshDocuments,
     selectedVersion,
     versions,
   );

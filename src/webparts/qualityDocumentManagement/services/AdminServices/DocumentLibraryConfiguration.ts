@@ -362,11 +362,31 @@ export const ensureDocumentCategoriesList = async (
     .filter(`Title eq '${listTitle}'`)
     .select("Id")();
 
-  if (lists.length === 0) {
+  const listWasCreated = lists.length === 0;
+
+  if (listWasCreated) {
     await sp.web.lists.add(listTitle);
   }
 
   const list = sp.web.lists.getByTitle(listTitle);
+
+  if (listWasCreated) {
+    const defaultCategories = [
+      "Process",
+      "Policy",
+      "Procedure",
+      "Work Instruction",
+      "Specific Form",
+    ];
+
+    await Promise.all(
+      defaultCategories.map((title) =>
+        list.items.add({
+          Title: title,
+        }),
+      ),
+    );
+  }
 
   const listInfo = (await list.select(
     "HasUniqueRoleAssignments",
@@ -489,20 +509,23 @@ export const ensureDocumentLibraryConfiguration = async (
   previousAdministrators: string[],
   libraryName: string,
 ): Promise<void> => {
-  await ensureDocumentLibraryColumns(sp, libraryId);
+  await Promise.all([
+    ensureDocumentLibraryColumns(sp, libraryId),
 
-  await ensureDocumentLibraryVersioning(sp, libraryId);
-  await ensureDocumentRelationsList(
-    sp,
-    libraryName,
-    administrators,
-    previousAdministrators,
-  );
+    ensureDocumentLibraryVersioning(sp, libraryId),
 
-  await ensureDocumentLibraryAdministrators(
-    sp,
-    libraryId,
-    administrators,
-    previousAdministrators,
-  );
+    ensureDocumentRelationsList(
+      sp,
+      libraryName,
+      administrators,
+      previousAdministrators,
+    ),
+
+    ensureDocumentLibraryAdministrators(
+      sp,
+      libraryId,
+      administrators,
+      previousAdministrators,
+    ),
+  ]);
 };

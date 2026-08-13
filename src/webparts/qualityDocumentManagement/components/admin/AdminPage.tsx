@@ -18,42 +18,44 @@ import { IAdminPage, ILibraryDocument } from "../../types/adminTypes";
 
 import { getLibraryDocuemnts } from "../../services/AdminServices/DocumentService";
 import { exportDocumentsToExcel } from "./service/ExportExcelService";
+import { useAdminDocumentFilter } from "./hooks/useAdminDocumentFilter";
+import { useDocumentSession } from "../../hooks/useDocumentSession";
 
-const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
+const AdminPage = ({ libraryName }: IAdminPage) => {
+  const { activeLibraryId, admin, updateAdminValue, clearAdminFilters } =
+    useDocumentSession();
+
+  const { valueTypeFilter, selectedCategory, searchTerm } = admin;
+
   const { categoriesMap } = useCategoryContext();
   const { setError } = useNotification();
   const { sp } = useSharePoint();
 
-  const [searchValue, setSearchvalue] = useState<string>("");
-
   const [openCategorySetting, setOpenCategorySetting] =
     useState<boolean>(false);
-
   const [openAddNewDoc, setOpenAddNewDoc] = useState<boolean>(false);
-
   const [documents, setDocuments] = useState<ILibraryDocument[]>([]);
-
   const [loading, setLoading] = useState<boolean>(false);
 
-  const [valueCategoryFilter, setValueCategoryFilter] = useState<string | null>(
-    null,
-  );
-
-  const [valueTypeFilter, setValueTypeFilter] = useState<string | null>(null);
-
   const fetchDocuments = useCallback(async () => {
+    if (!activeLibraryId) {
+      setDocuments([]);
+      return;
+    }
+
     setLoading(true);
 
     try {
       const documents = await getLibraryDocuemnts(sp, activeLibraryId);
-
       setDocuments(documents);
+      console.log("fetch get library documents");
     } catch (error) {
       console.error("Failed to fetch library documents:", error);
+
       setError(
         error instanceof Error
           ? error.message
-          : "Failed to get Library Docuemnts",
+          : "Failed to get Library Documents",
       );
     } finally {
       setLoading(false);
@@ -68,35 +70,46 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  const filteredDocuments = documents.filter((doc) => {
-    const searchTerm = searchValue.trim().toLowerCase();
-
-    const matchesSearch =
-      !searchTerm ||
-      doc.DocName?.toLowerCase().includes(searchTerm) ||
-      doc.DocReference?.toLowerCase().includes(searchTerm) ||
-      doc.DocDepartment?.toLowerCase().includes(searchTerm);
-
-    const matchesCategory =
-      !valueCategoryFilter || doc.DocCategory === valueCategoryFilter;
-
-    const matchesType = !valueTypeFilter || doc.DocType === valueTypeFilter;
-
-    return matchesSearch && matchesCategory && matchesType;
+  const filteredDocuments = useAdminDocumentFilter({
+    documents,
+    searchValue: searchTerm,
+    categoryFilter: selectedCategory,
+    typeFilter: valueTypeFilter,
   });
 
   const handleExportExcel = () => {
     exportDocumentsToExcel(filteredDocuments, libraryName);
   };
 
+  // const handleDocumentAdded = useCallback((document: ILibraryDocument) => {
+  //   setDocuments((prev) => [...prev, document]);
+  // }, []);
+
+  // const handleDocumentUpdated = useCallback(
+  //   (updatedDocument: ILibraryDocument) => {
+  //     setDocuments((prev) =>
+  //       prev.map((document) =>
+  //         document.Id === updatedDocument.Id ? updatedDocument : document,
+  //       ),
+  //     );
+  //   },
+  //   [],
+  // );
+
+  // const handleDocumentDeleted = useCallback((documentId: number) => {
+  //   setDocuments((prev) =>
+  //     prev.filter((document) => document.Id !== documentId),
+  //   );
+  // }, []);
+
   return (
     <section className={styles.adminSection}>
       <div className={styles.toolsDiv}>
         <AppSearchBox
           fullWidth={true}
-          value={searchValue}
+          value={searchTerm}
           placeholder="Search by name, referance, department..."
-          onChange={(value) => setSearchvalue(value)}
+          onChange={(value) => updateAdminValue("searchTerm", value)}
         />
 
         <AppButton
@@ -123,8 +136,8 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
       <div className={styles.filtersDiv}>
         <AppDropdown
           placeholder="Filter by category..."
-          value={valueCategoryFilter ?? undefined}
-          onChange={setValueCategoryFilter}
+          value={selectedCategory ?? undefined}
+          onChange={(value) => updateAdminValue("selectedCategory", value)}
           options={Object.keys(categoriesMap).map((key) => {
             const category = categoriesMap[Number(key)];
 
@@ -138,7 +151,7 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
         <AppDropdown
           placeholder="Filter by type..."
           value={valueTypeFilter ?? undefined}
-          onChange={setValueTypeFilter}
+          onChange={(value) => updateAdminValue("valueTypeFilter", value)}
           options={[
             {
               key: "Parent",
@@ -153,10 +166,7 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
 
         <AppButton
           variant="secondary"
-          onClick={() => {
-            setValueCategoryFilter(null);
-            setValueTypeFilter(null);
-          }}
+          onClick={clearAdminFilters}
           text="Reset Filters"
         />
       </div>
@@ -165,6 +175,7 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
         <EditCatergoties
           open={openCategorySetting}
           setOpen={setOpenCategorySetting}
+          onRefresh={refreshDocuments}
         />
       )}
 
@@ -172,7 +183,7 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
         <AddNewDoc
           setOpen={setOpenAddNewDoc}
           libraryName={libraryName}
-          onRefresh={refreshDocuments}
+          setDocuments={setDocuments}
         />
       )}
 
@@ -181,8 +192,9 @@ const AdminPage = ({ activeLibraryId, libraryName }: IAdminPage) => {
       ) : (
         <DocumentTable
           documents={filteredDocuments}
+          valueTypeFilter={valueTypeFilter}
           libraryName={libraryName}
-          onRefresh={refreshDocuments}
+          setDocuments={setDocuments}
         />
       )}
     </section>

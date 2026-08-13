@@ -10,9 +10,8 @@ export const useEditDocumentForm = ({
   document,
   isViewMode,
 }: IUseEditDocumentFormProps) => {
-  
   const [formData, setFormData] = useState<IEditDocumentFormData>({
-    docName: document.DocName,
+    docName: document.FileLeafRef,
     docReference: document.DocReference,
     docType: document.DocType,
     docParent: document.DocParent,
@@ -90,12 +89,14 @@ export const useEditDocumentForm = ({
     }
   };
 
+
+
   const isValidDocumentReference = /^[^-]+-[^-]+-[^-]+$/.test(
     formData.docReference.trim(),
   );
 
   const isFormChanged =
-    formData.docName !== document.DocName ||
+    formData.docName !== document.FileLeafRef ||
     formData.docReference !== document.DocReference ||
     formData.docType !== document.DocType ||
     formData.docParent !== document.DocParent ||

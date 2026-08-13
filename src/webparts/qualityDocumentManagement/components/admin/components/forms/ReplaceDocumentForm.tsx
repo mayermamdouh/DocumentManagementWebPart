@@ -7,15 +7,16 @@ import { ReplaceDocument } from "../../../../services/AdminServices/FileActionsS
 import { useSharePoint } from "../../../../contexts/SharePointContext";
 import { useNotification } from "../../../../contexts/NotificationContext";
 import AppLoading from "../../../common/AppLoading/Apploading";
+import AppToast from "../../../common/AppToast/AppToast";
 
 const ReplaceDocumentForm = ({
   document,
   onClose,
-  libraryName,
-  onRefresh,
+  setDocuments,
 }: IReplaceFormProps) => {
-  const { context , sp} = useSharePoint();
-  const { setMessage, setError } = useNotification();
+  const { sp } = useSharePoint();
+  const { setMessage } = useNotification();
+  const [error, setError] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | undefined>();
   const [loading, setLoading] = useState<boolean>(false);
@@ -54,21 +55,52 @@ const ReplaceDocumentForm = ({
     if (!file) {
       return;
     }
+
     try {
       setLoading(true);
+
       await ReplaceDocument(sp, document.File, file);
 
-      onClose();
-      await onRefresh();
+      setDocuments((prevDocuments) =>
+        prevDocuments.map((doc) =>
+          doc.Id === document.Id
+            ? {
+                ...doc,
+                File: {
+                  ...doc.File,
+                  Name: doc.File.Name,
+                  ServerRelativeUrl: doc.File.ServerRelativeUrl,
+                },
+              }
+            : doc,
+        ),
+      );
+
       setMessage("Document replaced successfully.");
+      onClose();
     } catch (error) {
       console.error("Failed to replace document:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to replace document.",
-      );
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+
+      if (
+        errorMessage.includes("[423]") ||
+        errorMessage.toLowerCase().includes("locked for shared use")
+      ) {
+        setError(
+          "This document is currently locked because it is open or being edited by another user. Please close the document and try again.",
+        );
+      } else {
+        setError(errorMessage || "Failed to replace document.");
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const clearError = () => {
+    setError("");
   };
 
   return (
@@ -84,19 +116,24 @@ const ReplaceDocumentForm = ({
             errorMessage={fileError}
           />
           <div className={styles.actions}>
-            <AppButton
-              fullWidth
-              text="Replace Document"
-              disabled={!file || !!fileError}
-              onClick={handleReplace}
-            />
+            {error && (
+              <AppToast message={error} onClose={clearError} type="error" />
+            )}
+            <div className={styles.flexColumn}>
+              <AppButton
+                fullWidth
+                text="Replace Document"
+                disabled={!file || !!fileError}
+                onClick={handleReplace}
+              />
 
-            <AppButton
-              fullWidth
-              text="Cancel"
-              variant="secondary"
-              onClick={onClose}
-            />
+              <AppButton
+                fullWidth
+                text="Cancel"
+                variant="secondary"
+                onClick={onClose}
+              />
+            </div>
           </div>
         </>
       )}

@@ -16,9 +16,9 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
   const [isValidating, setIsValidating] = useState(false);
   const [validationResult, setValidationResult] = useState({
     fileNameExists: false,
-    docNameExists: false,
     docReferenceExists: false,
   });
+
   const [formData, setFormData] = useState<IQualityDocumentForm>({
     file: null,
     docReference: "",
@@ -33,16 +33,11 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
   });
 
   useEffect(() => {
-    const fileName = formData.file?.name;
+    const fileName = formData.docName.trim();
 
-    if (
-      !fileName &&
-      !formData.docName.trim() &&
-      !formData.docReference.trim()
-    ) {
+    if (!fileName && !formData.docReference.trim()) {
       setValidationResult({
         fileNameExists: false,
-        docNameExists: false,
         docReferenceExists: false,
       });
 
@@ -56,14 +51,14 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
         const result = await validateDocument(
           sp,
           libraryName,
-          fileName || "",
-          formData.docName,
+          fileName,
           formData.docReference,
         );
 
         setValidationResult(result);
       } catch (error) {
         console.error("Failed to validate document:", error);
+
         setError(
           error instanceof Error
             ? error.message
@@ -77,7 +72,7 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [sp, libraryName, formData.file, formData.docName, formData.docReference]);
+  }, [sp, libraryName, formData.docName, formData.docReference]);
 
   const categoryOptions = useMemo(
     () =>
@@ -110,6 +105,7 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
     setFormData((prev) => ({
       ...prev,
       file,
+      docName: file?.name ?? "",
     }));
   };
 
@@ -151,7 +147,6 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
     !formData.docCategory ||
     (isChildDocument && !formData.docParent) ||
     validationResult.fileNameExists ||
-    validationResult.docNameExists ||
     validationResult.docReferenceExists ||
     isValidating;
 
@@ -161,7 +156,6 @@ export const useAddDocumentForm = ({ libraryName }: IUseDocumentForm) => {
     isChildDocument,
     isValidDocumentReference,
     fileNameExists: validationResult.fileNameExists,
-    docNameExists: validationResult.docNameExists,
     docReferenceExists: validationResult.docReferenceExists,
     isValidating,
     isSaveDisabled,

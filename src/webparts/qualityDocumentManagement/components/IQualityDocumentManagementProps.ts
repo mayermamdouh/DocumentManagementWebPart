@@ -1,18 +1,25 @@
-import { WebPartContext } from "@microsoft/sp-webpart-base";
-import { SPFI } from "@pnp/sp";
-import { ILibraryConfiguration } from "../QualityDocumentManagementWebPart";
+import {
+  ILibraryConfiguration,
+  ILibraryOption,
+} from "../config/types/ILibraryConfiguration";
 
 export interface IQualityDocumentManagementProps {
   appTitle: string;
   libraries: ILibraryConfiguration[];
-
+  availableLibraries: ILibraryOption[];
   isDarkTheme: boolean;
+  configurationVersion: number;
   environmentMessage: string;
   hasTeamsContext: boolean;
   userDisplayName: string;
   userDisplayEmail: string;
   user: any;
-  context: WebPartContext;
-  sp: SPFI;
-  configurationVersion: number;
+  context: any;
+  sp: any;
+  isConfigurationPopupOpen: boolean;
+  onOpenConfiguration: () => void;
+  onCloseConfiguration: () => void;
+  onSaveConfiguration: (
+    libraries: ILibraryConfiguration[],
+  ) => void;
 }

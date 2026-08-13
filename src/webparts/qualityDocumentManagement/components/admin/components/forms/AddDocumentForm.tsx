@@ -17,11 +17,16 @@ import { useAddDocumentForm } from "../AddNewDocument/hooks/useAddDocumentForm";
 import { useAddDocumentActions } from "../AddNewDocument/hooks/useAddDocumentActions";
 import { useParentDocumentSearch } from "../AddNewDocument/hooks/useParentDocumentSearch";
 import DocumentFileInput from "../DocumentFileInput/DocumentFileInput";
+import {
+  getFileExtension,
+  getFileNameWithoutExtension,
+} from "../../../../utils/fileUtils";
 
 const AddDocumentForm = ({
   onCancel,
   onDocumentCreated,
   libraryName,
+  setDocuments,
 }: IDocumentForm) => {
   const { sp, context } = useSharePoint();
   const { setMessage } = useNotification();
@@ -33,7 +38,6 @@ const AddDocumentForm = ({
     isChildDocument,
     isValidDocumentReference,
     fileNameExists,
-    docNameExists,
     docReferenceExists,
     isValidating,
     isSaveDisabled,
@@ -48,6 +52,7 @@ const AddDocumentForm = ({
   const { saveDraft, saveAndPublish } = useAddDocumentActions({
     sp,
     libraryName,
+    setDocuments,
   });
 
   const {
@@ -66,9 +71,9 @@ const AddDocumentForm = ({
   const handleSaveDraft = async () => {
     try {
       setLoading(true);
-      const itemId = await saveDraft(formData);
+      const document = await saveDraft(formData);
       setMessage("Document saved as draft successfully.");
-      onDocumentCreated(itemId);
+      onDocumentCreated(document.Id);
     } catch (error) {
       console.error("Failed to save document as draft:", error);
       setMessageError(
@@ -84,9 +89,9 @@ const AddDocumentForm = ({
   const handleSavePublish = async () => {
     try {
       setLoading(true);
-      const itemId = await saveAndPublish(formData);
+      const document = await saveAndPublish(formData);
       setMessage("Document published successfully.");
-      onDocumentCreated(itemId);
+      onDocumentCreated(document.Id);
     } catch (error) {
       console.error("Failed to save and publish document:", error);
       setMessageError(
@@ -99,6 +104,8 @@ const AddDocumentForm = ({
     }
   };
 
+  const fileExtension = formData.file?.name.match(/\.[^/.]+$/)?.[0] ?? "";
+
   return (
     <div className={styles.form}>
       {loading ? (
@@ -109,23 +116,24 @@ const AddDocumentForm = ({
             <DocumentFileInput
               file={formData.file}
               onChange={handleChangeFile}
-              errorMessage={
-                fileNameExists
-                  ? "A file with this name already exists."
-                  : undefined
-              }
             />
 
             <div className={styles.inputs}>
               <AppInput
                 label="Document Name"
                 required
-                value={formData.docName}
-                onChange={(value) => handleChangeInput("docName", value)}
+                value={getFileNameWithoutExtension(formData.docName)}
+                suffix={getFileExtension(formData.docName)}
+                onChange={(value) => {
+                  handleChangeInput(
+                    "docName",
+                    `${value}${getFileExtension(formData.docName)}`,
+                  );
+                }}
                 helperText="Document Name must be unique within this library."
                 errorMessage={
-                  docNameExists
-                    ? "A document with this name already exists."
+                  fileNameExists
+                    ? "A file with this name already exists."
                     : undefined
                 }
               />
@@ -216,7 +224,7 @@ const AddDocumentForm = ({
                               setParent(document.Id);
                             }}
                           >
-                            {document.DocName}
+                            {document.FileLeafRef}
                           </button>
                         ))}
                       </div>

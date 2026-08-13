@@ -2,8 +2,9 @@ import { SPFI } from "@pnp/sp";
 import {
   IDocumentChildrenInfo,
   IEditDocumentFormData,
+  ILibraryDocument,
 } from "../../types/adminTypes";
-import { getDocumentLevel } from "./DocumentService";
+import { getApprovalStatusText, getDocumentLevel } from "./DocumentService";
 import { DeleteFromList, UpdateList } from "./ListsService";
 import { DOCUMENT_COLUMNS } from "../../constants/columns";
 
@@ -18,23 +19,21 @@ export const DeleteDocument = async (
 export const validateDocumentMetadata = async (
   sp: SPFI,
   libraryName: string,
-  docName: string,
+  fileName: string,
   docReference: string,
   excludeItemId: number,
 ) => {
   const escapeODataValue = (value: string) => value.trim().replace(/'/g, "''");
 
-  const safeDocName = escapeODataValue(docName);
+  const safeDocName = escapeODataValue(fileName);
   const safeDocReference = escapeODataValue(docReference);
 
   const library = sp.web.lists.getByTitle(libraryName);
 
-  const [docNameItems, docReferenceItems] = await Promise.all([
+  const [fileNameItems, docReferenceItems] = await Promise.all([
     library.items
       .select("Id")
-      .filter(
-        `${DOCUMENT_COLUMNS.DOCUMENT_NAME} eq '${safeDocName}' and Id ne ${excludeItemId}`,
-      )
+      .filter(`FileLeafRef eq '${safeDocName}' and Id ne ${excludeItemId}`)
       .top(1)(),
 
     library.items
@@ -46,7 +45,7 @@ export const validateDocumentMetadata = async (
   ]);
 
   return {
-    docNameExists: docNameItems.length > 0,
+    fileNameExists: fileNameItems.length > 0,
     docReferenceExists: docReferenceItems.length > 0,
   };
 };
@@ -87,7 +86,7 @@ export const EditDocument = async (
   sp: SPFI,
   libraryName: string,
   docDataForm: IEditDocumentFormData & { Id: number },
-) => {
+): Promise<ILibraryDocument> => {
   await validateDocumentParent(
     sp,
     libraryName,
@@ -111,7 +110,7 @@ export const EditDocument = async (
     .getByTitle(libraryName)
     .items.getById(docDataForm.Id)
     .update({
-      [DOCUMENT_COLUMNS.DOCUMENT_NAME]: docDataForm.docName,
+      FileLeafRef: docDataForm.docName,
       [DOCUMENT_COLUMNS.DOCUMENT_REFERENCE]: docDataForm.docReference,
       [DOCUMENT_COLUMNS.CATEGORY]: docDataForm.docCategory,
       [DOCUMENT_COLUMNS.DEPARTMENT]: docDataForm.docDepartment,
@@ -134,6 +133,50 @@ export const EditDocument = async (
     DocCategory: docDataForm.docCategory,
     DocDepartment: docDataForm.docDepartment,
   });
+
+  const updatedDocument = await sp.web.lists
+    .getByTitle(libraryName)
+    .items.getById(docDataForm.Id)
+    .select(
+      "Id",
+      "FileLeafRef",
+      "FileRef",
+      "File/Name",
+      "File/ServerRelativeUrl",
+      "Created",
+      "Author/Id",
+      "Author/Title",
+      "Author/EMail",
+      DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
+      DOCUMENT_COLUMNS.DOCUMENT_NAME,
+      DOCUMENT_COLUMNS.DOCUMENT_TYPE,
+      DOCUMENT_COLUMNS.PARENT_DOCUMENT,
+      DOCUMENT_COLUMNS.CATEGORY,
+      DOCUMENT_COLUMNS.DEPARTMENT,
+      DOCUMENT_COLUMNS.KEYWORDS,
+      "OData__ModerationStatus",
+      "DocOwner/Id",
+      "DocOwner/Title",
+      "DocOwner/EMail",
+    )
+    .expand("File", "Author", "DocOwner")();
+  const parentDocument = updatedDocument.DocParent
+    ? await sp.web.lists
+        .getByTitle(libraryName)
+        .items.getById(updatedDocument.DocParent)
+        .select("FileLeafRef")()
+    : null;
+  return {
+    ...updatedDocument,
+    DocName: updatedDocument.FileLeafRef,
+    ApprovalStatus: getApprovalStatusText(
+      updatedDocument.OData__ModerationStatus,
+    ),
+    DocKeywords: updatedDocument.DocKeywords
+      ? JSON.parse(updatedDocument.DocKeywords).join(" ")
+      : "",
+    DocParentName: parentDocument?.FileLeafRef,
+  };
 };
 
 export const ApproveDocument = async (
@@ -179,12 +222,12 @@ export const checkDocumentHasChildren = async (
     const items = await sp.web.lists
       .getByTitle(libraryName)
       .items.filter(`${DOCUMENT_COLUMNS.PARENT_DOCUMENT} eq ${parentId}`)
-      .select("Id", DOCUMENT_COLUMNS.DOCUMENT_NAME)();
+      .select("Id", "FileLeafRef")();
 
     for (const item of items) {
       children.push({
         id: item.Id,
-        name: item.DocName,
+        name: item.FileLeafRef,
       });
 
       await loadChildren(item.Id);
@@ -337,7 +380,6 @@ export const ReplaceDocument = async (
 
   const fields = [
     DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
-    DOCUMENT_COLUMNS.DOCUMENT_NAME,
     DOCUMENT_COLUMNS.DOCUMENT_TYPE,
     DOCUMENT_COLUMNS.PARENT_DOCUMENT,
     DOCUMENT_COLUMNS.CATEGORY,

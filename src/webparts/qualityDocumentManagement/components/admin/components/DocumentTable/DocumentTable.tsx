@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import styles from "./DocumentTable.module.scss";
 
 import {
   IDocumentTableProps,
   ILibraryDocument,
 } from "../../../../types/adminTypes";
-
+import { useAdminDocumentRows } from "../../hooks/useAdminDocumentRows";
 import AdminActions, { AdminActionType } from "../Actions/AdminActions";
 
 import AppPopup from "../../../common/AppPopup/AppPopup";
@@ -19,12 +19,46 @@ import DeleteDocument from "../DeleteDocument/DeleteDocument";
 const DocumentTable = ({
   documents,
   libraryName,
-  onRefresh,
+  setDocuments,
+  valueTypeFilter,
 }: IDocumentTableProps) => {
+  const rows = useAdminDocumentRows(documents);
+  const [expandedDocuments, setExpandedDocuments] = useState<Set<number>>(
+    new Set(),
+  );
+
+  const parentIds = useMemo(() => {
+    return new Set(
+      rows
+        .map((row) => row.DocParent)
+        .filter((parentId): parentId is number => !!parentId),
+    );
+  }, [rows]);
+
   const [selectedDocument, setSelectedDocument] =
     useState<ILibraryDocument | null>(null);
 
   const [popupType, setPopupType] = useState<AdminActionType | null>(null);
+
+  const visibleRows = useMemo(() => {
+    const result = [];
+    const collapsedIds = new Set<number>();
+
+    for (const row of rows) {
+      if (row.DocParent && collapsedIds.has(row.DocParent)) {
+        collapsedIds.add(row.Id);
+        continue;
+      }
+
+      result.push(row);
+
+      if (parentIds.has(row.Id) && !expandedDocuments.has(row.Id)) {
+        collapsedIds.add(row.Id);
+      }
+    }
+
+    return result;
+  }, [rows, parentIds, expandedDocuments]);
 
   const handleAction = (
     document: ILibraryDocument,
@@ -72,7 +106,7 @@ const DocumentTable = ({
       case "view":
         return (
           <EditAndViewDocumentForm
-            onRefresh={onRefresh}
+            setDocuments={setDocuments}
             document={selectedDocument}
             libraryName={libraryName}
             mode="view"
@@ -83,7 +117,7 @@ const DocumentTable = ({
       case "edit":
         return (
           <EditAndViewDocumentForm
-            onRefresh={onRefresh}
+            setDocuments={setDocuments}
             document={selectedDocument}
             libraryName={libraryName}
             mode="edit"
@@ -95,9 +129,8 @@ const DocumentTable = ({
         return (
           <ReplaceDocumentForm
             document={selectedDocument}
-            libraryName={libraryName}
             onClose={handleClosePopup}
-            onRefresh={onRefresh}
+            setDocuments={setDocuments}
           />
         );
 
@@ -105,8 +138,8 @@ const DocumentTable = ({
         return (
           <DocumentVersions
             serverRelativeUrl={selectedDocument.File.ServerRelativeUrl}
-            onRefreshDocuments={onRefresh}
             isRejected={selectedDocument.OData__ModerationStatus === 1}
+            setDocuments={setDocuments}
           />
         );
 
@@ -119,21 +152,21 @@ const DocumentTable = ({
           />
         );
       case "DeleteDocument":
-        return (
-          <DeleteDocument
-            onClose={handleClosePopup}
-            onRefreshDocuments={onRefresh}
-            libraryName={libraryName}
-            documentId={selectedDocument.Id}
-          />
-        );
+      return (
+        <DeleteDocument
+          onClose={handleClosePopup}
+          setDocuments={setDocuments}
+          libraryName={libraryName}
+          documentId={selectedDocument.Id}
+        />
+      );
 
       default:
         return null;
     }
   };
 
-  if (documents.length === 0) {
+  if (rows.length === 0) {
     return <div className={styles.emptyState}>No documents found.</div>;
   }
 
@@ -146,6 +179,20 @@ const DocumentTable = ({
     Unknown: styles.unknown,
   };
 
+  const toggleDocument = (documentId: number): void => {
+    setExpandedDocuments((currentExpanded) => {
+      const nextExpanded = new Set(currentExpanded);
+
+      if (nextExpanded.has(documentId)) {
+        nextExpanded.delete(documentId);
+      } else {
+        nextExpanded.add(documentId);
+      }
+
+      return nextExpanded;
+    });
+  };
+
   return (
     <>
       <div className={styles.tableWrapper}>
@@ -153,7 +200,7 @@ const DocumentTable = ({
           <thead>
             <tr>
               <th>Document Name</th>
-              <th>Document Parent</th>
+              {valueTypeFilter === "Child" ? <th>Document Parent</th> : ""}
               <th>Status</th>
               <th>Reference</th>
               <th>Type</th>
@@ -162,95 +209,135 @@ const DocumentTable = ({
               <th>Owner</th>
               <th>Created By</th>
               <th>Created Date</th>
-              <th>File</th>
               <th className={styles.actionsHeader}>Actions</th>
             </tr>
           </thead>
 
           <tbody>
-            {documents.map((document: ILibraryDocument) => (
-              <tr key={document.Id}>
-                <td>
-                  <span className={styles.documentName}>
-                    {document.DocName}
-                  </span>
-                </td>
+            {(valueTypeFilter === "Child" ? documents : visibleRows).map(
+              (document) => (
+                <tr key={document.Id}>
+                  <td>
+                    <div
+                      className={styles.documentTreeName}
+                      style={{
+                        paddingLeft: `${(document.level ?? 0) * 20}px`,
+                      }}
+                    >
+                      {valueTypeFilter !== "Child" &&
+                        parentIds.has(document.Id) && (
+                          <button
+                            type="button"
+                            className={styles.expandButton}
+                            onClick={() => toggleDocument(document.Id)}
+                            aria-label={
+                              expandedDocuments.has(document.Id)
+                                ? "Collapse document"
+                                : "Expand document"
+                            }
+                          >
+                            {expandedDocuments.has(document.Id) ? "▼" : "▶"}
+                          </button>
+                        )}
 
-                <td>
-                  <span className={styles.documentName}>
-                    {document.DocParentName || "-"}
-                  </span>
-                </td>
+                      <a
+                        className={styles.fileLink}
+                        href={`${document.File.ServerRelativeUrl}?web=1`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={document.File.Name}
+                      >
+                        {document.DocName}
+                      </a>
 
-                <td>
-                  <span
-                    className={`${styles.approvalStatus} ${
-                      approvalStatusClass[document.ApprovalStatus] ??
-                      styles.unknown
-                    }`}
-                  >
-                    {document.ApprovalStatus}
-                  </span>
-                </td>
+                      <button
+                        type="button"
+                        className={styles.copyLinkButton}
+                        onClick={() => {
+                          const link = `${window.location.origin}${document.File.ServerRelativeUrl}`;
+                          navigator.clipboard.writeText(link);
+                        }}
+                        title="Copy link"
+                        aria-label={`Copy link for ${document.DocName}`}
+                      >
+                        🔗
+                      </button>
+                    </div>
+                  </td>
+                  {valueTypeFilter === "Child" ? (
+                    <td className={styles.documentParentName}>
+                      <span
+                        className={styles.documentName}
+                        title={document.DocParentName || "-"}
+                      >
+                        {document.DocParentName || "-"}
+                      </span>
+                    </td>
+                  ) : (
+                    ""
+                  )}
 
-                <td>
-                  <span className={styles.reference}>
-                    {document.DocReference}
-                  </span>
-                </td>
+                  <td>
+                    <span
+                      className={`${styles.approvalStatus} ${
+                        approvalStatusClass[document.ApprovalStatus] ??
+                        styles.unknown
+                      }`}
+                    >
+                      {document.ApprovalStatus}
+                    </span>
+                  </td>
 
-                <td>
-                  <span className={styles.type}>{document.DocType}</span>
-                </td>
+                  <td>
+                    <span className={styles.reference}>
+                      {document.DocReference}
+                    </span>
+                  </td>
 
-                <td>{document.DocCategory}</td>
+                  <td>
+                    <span className={styles.type}>{document.DocType}</span>
+                  </td>
 
-                <td>{document.DocDepartment}</td>
+                  <td>{document.DocCategory}</td>
 
-                <td>
-                  <span className={styles.owner}>
-                    {document.DocOwner?.Title || "-"}
-                  </span>
-                </td>
+                  <td>{document.DocDepartment}</td>
 
-                <td>
-                  <span className={styles.owner}>
-                    {document.Author?.Title || "-"}
-                  </span>
-                </td>
+                  <td>
+                    <span className={styles.owner}>
+                      {document.DocOwner?.Title || "-"}
+                    </span>
+                  </td>
 
-                <td>
-                  <span className={styles.createdDate}>
-                    {document.Created
-                      ? new Date(document.Created).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })
-                      : "-"}
-                  </span>
-                </td>
+                  <td>
+                    <span className={styles.owner}>
+                      {document.Author?.Title || "-"}
+                    </span>
+                  </td>
 
-                <td>
-                  <a
-                    className={styles.fileLink}
-                    href={`${document.File.ServerRelativeUrl}?web=1`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={document.File.Name}
-                  >
-                    {document.File.Name}
-                  </a>
-                </td>
+                  <td>
+                    <span className={styles.createdDate}>
+                      {document.Created
+                        ? new Date(document.Created).toLocaleDateString(
+                            "en-GB",
+                            {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            },
+                          )
+                        : "-"}
+                    </span>
+                  </td>
 
-                <td className={styles.actionsCell}>
-                  <AdminActions
-                    document={document}
-                    onAction={(action) => handleAction(document, action)}
-                  />
-                </td>
-              </tr>
-            ))}
+                  <td className={styles.actionsCell}>
+                    <AdminActions
+                      document={document}
+                      onAction={(action) => handleAction(document, action)}
+                    />
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>

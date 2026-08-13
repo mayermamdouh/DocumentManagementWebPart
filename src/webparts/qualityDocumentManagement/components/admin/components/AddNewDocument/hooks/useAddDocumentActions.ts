@@ -1,5 +1,8 @@
 import { SPFI } from "@pnp/sp";
-import { IQualityDocumentForm } from "../../../../../types/adminTypes";
+import {
+  ILibraryDocument,
+  IQualityDocumentForm,
+} from "../../../../../types/adminTypes";
 import {
   AddNewDocument,
   PublishDocument,
@@ -8,23 +11,35 @@ import {
 interface IUseDocumentActionsProps {
   sp: SPFI;
   libraryName: string;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export const useAddDocumentActions = ({
   sp,
   libraryName,
+  setDocuments,
 }: IUseDocumentActionsProps) => {
+  const saveDraft = async (formData: IQualityDocumentForm) => {
+    const document = await AddNewDocument(sp, libraryName, formData);
 
-  const saveDraft = (formData: IQualityDocumentForm) => {
-    return AddNewDocument(sp, libraryName, formData);
+    setDocuments((prev) => [...prev, document]);
+    return document;
   };
 
   const saveAndPublish = async (formData: IQualityDocumentForm) => {
-    const itemId = await AddNewDocument(sp, libraryName, formData);
+    const document = await AddNewDocument(sp, libraryName, formData);
 
-    await PublishDocument(sp, libraryName, itemId);
+    await PublishDocument(sp, libraryName, document.Id);
 
-    return itemId;
+    const publishedDocument: ILibraryDocument = {
+      ...document,
+      OData__ModerationStatus: 0,
+      ApprovalStatus: "Approved",
+    };
+
+    setDocuments((prev) => [...prev, publishedDocument]);
+
+    return publishedDocument;
   };
 
   return {

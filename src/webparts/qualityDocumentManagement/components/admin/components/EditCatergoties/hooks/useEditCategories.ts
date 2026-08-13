@@ -9,6 +9,7 @@ import {
 import { useSharePoint } from "../../../../../contexts/SharePointContext";
 
 interface IUseEditCategoriesProps {
+  onRefresh: () => Promise<void>;
   sp: SPFI;
   oldCategories: ICategory[];
   onSuccess: () => Promise<void>;
@@ -18,6 +19,7 @@ interface IUseEditCategoriesProps {
 }
 
 export const useEditCategories = ({
+  onRefresh,
   sp,
   oldCategories,
   onSuccess,
@@ -172,6 +174,7 @@ export const useEditCategories = ({
       );
       await onSuccess();
       onClose();
+      await onRefresh();
       setMessage("Categories have been updated successfully.");
     } catch (error) {
       console.error("Failed to update categories:", error);
@@ -184,9 +187,9 @@ export const useEditCategories = ({
     }
   };
 
-    const isSaveDisabled =
-      isLoading ||
-      (addedCategories.length === 0 && removedCategoryIds.length === 0);
+  const isSaveDisabled =
+    isLoading ||
+    (addedCategories.length === 0 && removedCategoryIds.length === 0);
 
   return {
     newCategory,

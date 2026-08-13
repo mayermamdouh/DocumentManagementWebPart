@@ -33,13 +33,11 @@ export interface IUserLibraryDocument {
 }
 
 export interface IUserPage {
-  activeLibraryId: string;
   libraryName: string;
 }
 
 export interface IUseUserDocumentsProps {
   libraryName: string;
-  activeLibraryId: string;
 }
 
 export interface IUserDocumentTreeNode extends IUserLibraryDocument {
@@ -52,5 +50,4 @@ export interface IUserDocumentTreeNodeProps {
 
 export interface IUserDocumentTreeProps {
   documents: IUserLibraryDocument[];
-  activeLibraryId: string;
 }

@@ -17,7 +17,7 @@ const DeleteDocument = ({
   documentId,
   libraryName,
   onClose,
-  onRefreshDocuments,
+  setDocuments,
 }: IDocumentDeleteProps) => {
   const { sp } = useSharePoint();
   const { setMessage, setError } = useNotification();
@@ -50,7 +50,9 @@ const DeleteDocument = ({
       const ids = [documentId, ...childrensIds];
 
       await DeleteDocuments(sp, libraryName, ids);
-      await onRefreshDocuments();
+      setDocuments((prevDocuments) =>
+        prevDocuments.filter((doc) => !ids.includes(doc.Id)),
+      );
       setMessage(
         "The document and all related child documents were deleted successfully.",
       );

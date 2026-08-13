@@ -52,9 +52,53 @@
   border-bottom: none;
 }
 
-.documentName {
-  font-weight: 600;
-  color: var(--color-text-primary);
+.documentTreeName {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 150px;
+  width: 100%;
+  max-width: 250px;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.copyLinkButton {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.copyLinkButton:hover {
+  opacity: 1;
+}
+
+.expandButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.documentName,
+.documentParentName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+  max-width: 200px;
 }
 
 .reference {

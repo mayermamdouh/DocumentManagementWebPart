@@ -10,7 +10,7 @@ const ConfigurationRequired = ({
       return "Please configure at least one document library in the property pane.";
     }
 
-    return "Please click the Prepare Document Libraries button to continue.";
+    return "Please click the Save button to continue.";
   };
 
   return (

@@ -6,24 +6,23 @@ import {
   IUserLibraryDocument,
   IUseUserDocumentsProps,
 } from "../../../types/userTypes";
+import { useDocumentSession } from "../../../hooks/useDocumentSession";
 
-export const useUserDocuments = ({
-  libraryName,
-  activeLibraryId,
-}: IUseUserDocumentsProps) => {
+export const useUserDocuments = ({ libraryName }: IUseUserDocumentsProps) => {
   const { sp } = useSharePoint();
   const { setError } = useNotification();
 
-  const [searchValue, setSearchValue] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const { user, activeLibraryId, updateUserValue } =
+    useDocumentSession();
+
   const [documents, setDocuments] = useState<IUserLibraryDocument[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
   const searchDocuments = useCallback(async () => {
-    const searchTerm = searchValue.trim();
+    const searchTerm = user.searchTerm.trim();
 
-    if (!searchTerm) {
+    if (!searchTerm || !activeLibraryId) {
       setDocuments([]);
       setHasSearched(false);
       return;
@@ -38,7 +37,7 @@ export const useUserDocuments = ({
         searchTerm,
         activeLibraryId,
         libraryName,
-        categoryFilter,
+        user.selectedCategory,
       );
 
       setDocuments(results);
@@ -46,6 +45,7 @@ export const useUserDocuments = ({
       console.error("Failed to search user documents:", error);
 
       setDocuments([]);
+
       setError(
         error instanceof Error
           ? error.message
@@ -54,20 +54,23 @@ export const useUserDocuments = ({
     } finally {
       setLoading(false);
     }
-  }, [sp, activeLibraryId, searchValue, categoryFilter, setError]);
+  }, [
+    sp,
+    user.searchTerm,
+    activeLibraryId,
+    user.selectedCategory,
+    libraryName,
+    setError,
+  ]);
 
   const resetSearch = useCallback(() => {
-    setSearchValue("");
-    setCategoryFilter(null);
     setDocuments([]);
     setHasSearched(false);
   }, []);
 
   return {
-    searchValue,
-    setSearchValue,
-    categoryFilter,
-    setCategoryFilter,
+    user,
+    updateUserValue,
     documents,
     loading,
     hasSearched,

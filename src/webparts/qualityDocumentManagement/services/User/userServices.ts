@@ -17,7 +17,7 @@ const selectFields = [
   "File/Name",
   "File/ServerRelativeUrl",
   DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
-  DOCUMENT_COLUMNS.DOCUMENT_NAME,
+  "FileLeafRef",
   DOCUMENT_COLUMNS.DOCUMENT_TYPE,
   DOCUMENT_COLUMNS.PARENT_DOCUMENT,
   DOCUMENT_COLUMNS.CATEGORY,
@@ -161,7 +161,7 @@ const getAccessibleDocuments = async (
 export const searchUserDocuments = async (
   sp: SPFI,
   searchValue: string,
-  activeLibraryId: string,
+  activeLibraryId: string | null,
   libraryName: string,
   category?: string | null,
 ): Promise<IUserLibraryDocument[]> => {
@@ -218,7 +218,7 @@ export const searchUserDocuments = async (
 
   const accessibleDocuments = await getAccessibleDocuments(
     sp,
-    activeLibraryId,
+    activeLibraryId ? activeLibraryId : "",
     Array.from(relationsMap.keys()),
   );
   const documentsMap = new Map<number, ILibraryDocument>();
@@ -237,7 +237,7 @@ export const searchUserDocuments = async (
         Id: relation.DocumentId,
 
         DocReference: relation.DocReference,
-        DocName: relation.DocName,
+        DocName: document?.FileLeafRef ?? relation.DocName,
         DocCategory: relation.DocCategory,
         DocDepartment: relation.DocDepartment,
         DocParent: relation.ParentDocumentId,

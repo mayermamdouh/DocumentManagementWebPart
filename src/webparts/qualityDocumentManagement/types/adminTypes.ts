@@ -3,23 +3,24 @@ import { AdminActionType } from "../components/admin/components/Actions/AdminAct
 export interface IEditCatergoties {
   open: boolean;
   setOpen: (value: boolean) => void;
+  onRefresh: () => Promise<void>;
 }
 
 export interface IAdminPage {
-  activeLibraryId: string;
   libraryName: string;
 }
 
 export interface IAddNewDoc {
   setOpen: (value: boolean) => void;
   libraryName: string;
-  onRefresh: () => Promise<void>;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export interface IDocumentForm {
   onCancel: () => void;
   libraryName: string;
   onDocumentCreated: (itemId: number) => void;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export interface IQualityDocumentForm {
@@ -37,7 +38,7 @@ export interface IQualityDocumentForm {
 
 export interface ISearchParent {
   Id: number;
-  DocName: string;
+  FileLeafRef: string;
 }
 
 export interface ILibraryDocument {
@@ -48,7 +49,7 @@ export interface ILibraryDocument {
     Name: string;
     ServerRelativeUrl: string;
   };
-
+  level?: number;
   Created: string;
 
   Author?: {
@@ -83,7 +84,8 @@ export interface IDocumentParent {
 export interface IDocumentTableProps {
   documents: ILibraryDocument[];
   libraryName: string;
-  onRefresh: () => Promise<void>;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
+  valueTypeFilter: string | null;
 }
 
 export interface IAdminActions {
@@ -104,7 +106,7 @@ export interface IViewAndEditDoc {
 }
 
 export interface IEditAndViewDocumentFormProps {
-  onRefresh: () => Promise<void>;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
   document: ILibraryDocument;
   mode: "view" | "edit";
   onClose: () => void;
@@ -114,8 +116,7 @@ export interface IEditAndViewDocumentFormProps {
 export interface IReplaceFormProps {
   document: ILibraryDocument;
   onClose: () => void;
-  libraryName: string;
-  onRefresh: () => Promise<void>;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export interface IEditDocumentFormData {
@@ -127,6 +128,7 @@ export interface IEditDocumentFormData {
   docDepartment: string;
   docKeywords: string;
   docOwnerId?: number;
+
 }
 
 export interface IFileVersion {
@@ -153,8 +155,8 @@ export interface ICurrentFile {
 
 export interface IDocumentVersionsProps {
   serverRelativeUrl: string;
-  onRefreshDocuments: () => Promise<void>;
   isRejected: boolean;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export interface IDocumentPermissionProps {
@@ -166,7 +168,7 @@ export interface IDocumentDeleteProps {
   documentId: number;
   libraryName: string;
   onClose: () => void;
-  onRefreshDocuments: () => Promise<void>;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export interface IDocumentVersionsActions {
@@ -174,8 +176,8 @@ export interface IDocumentVersionsActions {
   serverRelativeUrl: string;
   versions: IFileVersion[];
   onRefresh: () => Promise<void>;
-  onRefreshDocuments: () => Promise<void>;
   isRejected: boolean;
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
 }
 
 export interface IPermissionEntry {
@@ -192,4 +194,15 @@ export interface IDocumentChildrenInfo {
     id: number;
     name: string;
   }[];
+}
+
+export interface IEditDocumentFormData {
+  docName: string;
+  docReference: string;
+  docType: "Parent" | "Child";
+  docParent?: number;
+  docCategory: string;
+  docDepartment: string;
+  docKeywords: string;
+  docOwnerId?: number;
 }

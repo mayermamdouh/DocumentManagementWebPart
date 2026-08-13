@@ -15,13 +15,14 @@ import { useCategoryContext } from "../../../../contexts/CategoryContext";
 import { useParentDocumentSearch } from "../AddNewDocument/hooks/useParentDocumentSearch";
 import { useDocumentActions } from "../Actions/hooks/useDocumentActions";
 import { useEditDocumentForm } from "../Actions/hooks/useEditDocumentForm";
+import AppToast from "../../../common/AppToast/AppToast";
 
 const EditAndViewDocumentForm = ({
   document,
   mode,
   onClose,
   libraryName,
-  onRefresh,
+  setDocuments,
 }: IEditAndViewDocumentFormProps) => {
   const { context, sp } = useSharePoint();
   const { categoriesMap } = useCategoryContext();
@@ -44,17 +45,19 @@ const EditAndViewDocumentForm = ({
   });
 
   const {
-    isDocNameExists,
+    isFileNameExists,
     isDocReferenceExists,
     isValidating,
     isLoadingEdit,
+    error,
+    clearError,
     handleEditDocument,
   } = useDocumentActions({
     onClose,
     libraryName,
     document,
     formData,
-    onRefresh,
+    setDocuments,
   });
 
   const categoryOptions = useMemo(
@@ -81,10 +84,12 @@ const EditAndViewDocumentForm = ({
     documentId: document.Id,
   });
 
+  const fileExtension = document.FileLeafRef.match(/\.[^/.]+$/)?.[0] ?? "";
+
   const isSaveDisabled =
     !isFormChanged ||
     (isChildDocument && !formData.docParent) ||
-    isDocNameExists ||
+    isFileNameExists ||
     isDocReferenceExists ||
     isValidating ||
     !isValidDocumentReference;
@@ -97,18 +102,23 @@ const EditAndViewDocumentForm = ({
         <>
           <div className={styles.formContent}>
             <div className={styles.inputs}>
-              <AppInput
-                label="Document Name"
-                required
-                value={formData.docName}
-                disabled={isViewMode}
-                onChange={(value) => handleChangeInput("docName", value)}
-                errorMessage={
-                  isDocNameExists
-                    ? "A document with this name already exists."
-                    : undefined
-                }
-              />
+              <div className={styles.fileNameInput}>
+                <AppInput
+                  label="Document Name"
+                  required
+                  value={formData.docName.replace(/\.[^/.]+$/, "")}
+                  disabled={isViewMode}
+                  suffix={fileExtension}
+                  onChange={(value) => {
+                    handleChangeInput("docName", `${value}${fileExtension}`);
+                  }}
+                  errorMessage={
+                    isFileNameExists
+                      ? "A document with this name already exists."
+                      : undefined
+                  }
+                />
+              </div>
 
               <AppInput
                 label="Document Reference"
@@ -213,7 +223,7 @@ const EditAndViewDocumentForm = ({
                                   setParent(parentDocument.Id);
                                 }}
                               >
-                                {parentDocument.DocName}
+                                {parentDocument.FileLeafRef}
                               </button>
                             ))}
                           </div>
@@ -251,22 +261,28 @@ const EditAndViewDocumentForm = ({
               />
             </div>
           </div>
+
           <div className={styles.actions}>
-            {mode === "edit" && (
+            {error && (
+              <AppToast message={error} type="error" onClose={clearError} />
+            )}
+            <div className={styles.flexColumn}>
+              {mode === "edit" && (
+                <AppButton
+                  fullWidth
+                  text="Save Changes"
+                  disabled={isSaveDisabled}
+                  onClick={handleEditDocument}
+                />
+              )}
+
               <AppButton
                 fullWidth
-                text="Save Changes"
-                disabled={isSaveDisabled}
-                onClick={handleEditDocument}
+                text={isViewMode ? "Close" : "Cancel"}
+                variant="secondary"
+                onClick={onClose}
               />
-            )}
-
-            <AppButton
-              fullWidth
-              text={isViewMode ? "Close" : "Cancel"}
-              variant="secondary"
-              onClick={onClose}
-            />
+            </div>
           </div>
         </>
       )}

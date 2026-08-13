@@ -10,12 +10,12 @@ export interface IAppToastProps {
   duration?: number;
 }
 
-const AppToast: React.FC<IAppToastProps> = ({
+const AppToast = ({
   message,
   type = "info",
   onClose,
   duration = 8000,
-}) => {
+}: IAppToastProps) => {
   useEffect(() => {
     if (!onClose || duration <= 0) {
       return;

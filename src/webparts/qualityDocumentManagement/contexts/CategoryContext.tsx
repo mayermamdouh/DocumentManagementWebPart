@@ -46,9 +46,7 @@ export const CategoryProvider = ({ children }: ICategoryProviderProps) => {
     }
   }, [sp, setError]);
 
-  useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+
 
   return (
     <CategoryContext.Provider

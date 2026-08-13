@@ -88,14 +88,14 @@ export const useParentDocumentSearch = ({
         }
 
         console.error("Error searching parent documents:", error);
-          setError(
-            error instanceof Error
-              ? error.message
-              : "Error searching parent documents",
-          );
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Error searching parent documents",
+        );
 
         setParentDocuments([]);
-        setError(error);
+    
       } finally {
         if (!isCancelled) {
           setIsSearching(false);
@@ -119,7 +119,7 @@ export const useParentDocumentSearch = ({
 
   const selectParent = (document: ISearchParent): void => {
     setSelectedParent(document);
-    setSearchValue(document.DocName);
+    setSearchValue(document.FileLeafRef);
     setParentDocuments([]);
     setIsSearching(false);
   };

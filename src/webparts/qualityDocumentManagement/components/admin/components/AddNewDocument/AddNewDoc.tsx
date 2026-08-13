@@ -5,7 +5,7 @@ import styles from "./AddNewDoc.module.scss";
 import AddDocumentForm from "../forms/AddDocumentForm";
 import DocumentPermission from "../Actions/DocumentPermissions/DocumentPermission";
 
-const AddNewDoc = ({ setOpen, libraryName, onRefresh }: IAddNewDoc) => {
+const AddNewDoc = ({ setOpen, libraryName, setDocuments }: IAddNewDoc) => {
   const [permissionItemId, setPermissionItemId] = useState<number | null>(null);
 
   const handleDocumentCreated = (itemId: number) => {
@@ -15,7 +15,6 @@ const AddNewDoc = ({ setOpen, libraryName, onRefresh }: IAddNewDoc) => {
   const handleClosePermissions = async () => {
     setOpen(false);
     setPermissionItemId(null);
-    await onRefresh();
   };
 
   return (
@@ -31,6 +30,7 @@ const AddNewDoc = ({ setOpen, libraryName, onRefresh }: IAddNewDoc) => {
               onCancel={() => setOpen(false)}
               libraryName={libraryName}
               onDocumentCreated={handleDocumentCreated}
+              setDocuments={setDocuments}
             />
           </section>
         </AppPopup>

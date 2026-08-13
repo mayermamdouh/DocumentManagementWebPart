@@ -13,6 +13,7 @@ interface IAppInputProps extends Omit<
   startIcon?: React.ReactNode;
   endIcon?: React.ReactNode;
   onChange?: (value: string) => void;
+  suffix?: React.ReactNode;
 }
 
 const AppInput = ({
@@ -23,6 +24,7 @@ const AppInput = ({
   startIcon,
   endIcon,
   onChange,
+  suffix,
   className = "",
   required,
   ...rest
@@ -45,6 +47,8 @@ const AppInput = ({
           {...rest}
           onChange={(e) => onChange?.(e.target.value)}
         />
+
+        {suffix && <span className={styles.suffix}>{suffix}</span>}
 
         {endIcon && <span className={styles.icon}>{endIcon}</span>}
       </div>

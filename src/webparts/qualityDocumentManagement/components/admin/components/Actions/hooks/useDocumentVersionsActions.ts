@@ -6,7 +6,11 @@ import {
   RejectFileVersion,
   RestoreVersion,
 } from "../../../../../services/AdminServices/DocumentVersions";
-import { IFileVersion } from "../../../../../types/adminTypes";
+import {
+  IFileVersion,
+  ILibraryDocument,
+} from "../../../../../types/adminTypes";
+import { getApprovalStatusText } from "../../../../../services/AdminServices/DocumentService";
 
 interface IUseDocumentVersionsActions {
   loading: boolean;
@@ -14,7 +18,6 @@ interface IUseDocumentVersionsActions {
   canReject: boolean;
   canDelete: boolean;
   canRestore: boolean;
-
   versionsMessage: string | null;
   handleAction: (
     value: "approve" | "reject" | "delete" | "restore",
@@ -22,10 +25,10 @@ interface IUseDocumentVersionsActions {
 }
 
 export const useDocumentVersionsActions = (
+  setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>,
   isRejected: boolean,
   serverRelativeUrl: string,
   onRefreshVersions: () => Promise<void>,
-  onRefreshDocuments: () => Promise<void>,
   selectedVersion?: IFileVersion | null,
   versions: IFileVersion[] = [],
 ): IUseDocumentVersionsActions => {
@@ -41,7 +44,6 @@ export const useDocumentVersionsActions = (
       return;
     }
 
-
     setVersionsMessage(null);
     setLoading(true);
 
@@ -49,16 +51,36 @@ export const useDocumentVersionsActions = (
       switch (action) {
         case "approve":
           await ApproveAndPublishVersion(sp, serverRelativeUrl);
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) =>
+              doc.File.ServerRelativeUrl === serverRelativeUrl
+                ? {
+                    ...doc,
+                    OData__ModerationStatus: 0,
+                    ApprovalStatus: getApprovalStatusText(0),
+                  }
+                : doc,
+            ),
+          );
           setVersionsMessage("Version approved and published successfully.");
           await onRefreshVersions?.();
-          await onRefreshDocuments?.();
           break;
 
         case "reject":
           await RejectFileVersion(sp, serverRelativeUrl, selectedVersion.ID);
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) =>
+              doc.File.ServerRelativeUrl === serverRelativeUrl
+                ? {
+                    ...doc,
+                    OData__ModerationStatus: 1,
+                    ApprovalStatus: getApprovalStatusText(1),
+                  }
+                : doc,
+            ),
+          );
           setVersionsMessage("Version rejected successfully.");
           await onRefreshVersions?.();
-          await onRefreshDocuments?.();
           break;
 
         case "delete":
@@ -73,9 +95,19 @@ export const useDocumentVersionsActions = (
             serverRelativeUrl,
             selectedVersion.VersionLabel,
           );
+          setDocuments((prevDocuments) =>
+            prevDocuments.map((doc) =>
+              doc.File.ServerRelativeUrl === serverRelativeUrl
+                ? {
+                    ...doc,
+                    OData__ModerationStatus: 3,
+                    ApprovalStatus: getApprovalStatusText(3),
+                  }
+                : doc,
+            ),
+          );
           setVersionsMessage("Version restored successfully.");
           await onRefreshVersions?.();
-          await onRefreshDocuments?.();
           break;
 
         default:

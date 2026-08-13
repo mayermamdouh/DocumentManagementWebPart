@@ -11,7 +11,7 @@ import { ICategory } from "../../../../types/commonTypes";
 import { useEditCategories } from "./hooks/useEditCategories";
 import AppLoading from "../../../common/AppLoading/Apploading";
 
-const EditCatergoties = ({ open, setOpen }: IEditCatergoties) => {
+const EditCatergoties = ({ open, setOpen, onRefresh }: IEditCatergoties) => {
   const { sp } = useSharePoint();
   const { setError, setMessage } = useNotification();
   const { categoriesMap, refreshCategories } = useCategoryContext();
@@ -38,6 +38,7 @@ const EditCatergoties = ({ open, setOpen }: IEditCatergoties) => {
     handleSaveCategories,
     isLoading,
   } = useEditCategories({
+    onRefresh,
     sp,
     oldCategories,
     onSuccess: refreshCategories,

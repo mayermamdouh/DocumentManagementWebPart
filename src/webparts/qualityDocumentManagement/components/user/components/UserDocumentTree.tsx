@@ -4,6 +4,7 @@ import { IUserDocumentTreeProps } from "../../../types/userTypes";
 import { useDocumentTree } from "../hooks/useDocumentTree";
 import UserDocumentTreeNode from "./UserDocumentTreeNode";
 import { useVisibleDocumentTree } from "../hooks/useVisibleDocumentTree";
+import { useDocumentSession } from "../../../hooks/useDocumentSession";
 
 const UserDocumentTree = ({ documents }: IUserDocumentTreeProps) => {
   const tree = useDocumentTree(documents);

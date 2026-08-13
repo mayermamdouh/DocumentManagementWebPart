@@ -12,26 +12,23 @@ export const validateDocument = async (
   sp: SPFI,
   libraryName: string,
   fileName: string,
-  docName: string,
   docReference: string,
 ) => {
   const escapeODataValue = (value: string) => value.trim().replace(/'/g, "''");
 
   const safeFileName = escapeODataValue(fileName);
-  const safeDocName = escapeODataValue(docName);
   const safeDocReference = escapeODataValue(docReference);
 
   const library = sp.web.lists.getByTitle(libraryName);
 
   const filters = [
     `FileLeafRef eq '${safeFileName}'`,
-    `DocName eq '${safeDocName}'`,
     `DocReference eq '${safeDocReference}'`,
   ];
 
-  const [fileNameItems, docNameItems, docReferenceItems] = await Promise.all(
+  const [fileNameItems, docReferenceItems] = await Promise.all(
     filters.map((filter) => {
-      let query = library.items.select("Id").filter(filter).top(1);
+      const query = library.items.select("Id").filter(filter).top(1);
 
       return query();
     }),
@@ -39,7 +36,6 @@ export const validateDocument = async (
 
   return {
     fileNameExists: fileNameItems.length > 0,
-    docNameExists: docNameItems.length > 0,
     docReferenceExists: docReferenceItems.length > 0,
   };
 };
@@ -69,13 +65,18 @@ export const getDocumentLevel = async (
   return level;
 };
 
-export const uploadFile = async (sp: SPFI, file: File, libraryName: string) => {
+export const uploadFile = async (
+  sp: SPFI,
+  file: File,
+  fileName: string,
+  libraryName: string,
+) => {
   const webInfo = await sp.web.select("ServerRelativeUrl")();
 
   const webServerRelativeUrl = webInfo.ServerRelativeUrl.replace(/\/$/, "");
   const libraryServerRelativeUrl = `${webServerRelativeUrl}/${libraryName}`;
   const folder = sp.web.getFolderByServerRelativePath(libraryServerRelativeUrl);
-  const uploadResult = await folder.files.addUsingPath(file.name, file, {
+  const uploadResult = await folder.files.addUsingPath(fileName, file, {
     Overwrite: false,
   });
 
@@ -86,8 +87,7 @@ export const AddNewDocument = async (
   sp: SPFI,
   libraryName: string,
   docDataForm: IQualityDocumentForm,
-) => {
-  // validate max children
+): Promise<ILibraryDocument> => {
   if (docDataForm.docParent) {
     const parentLevel = await getDocumentLevel(
       sp,
@@ -107,19 +107,21 @@ export const AddNewDocument = async (
   > | null = null;
 
   try {
-    const uploadResult = await uploadFile(sp, docDataForm.file!, libraryName);
+    const uploadResult = await uploadFile(
+      sp,
+      docDataForm.file!,
+      docDataForm.docName,
+      libraryName,
+    );
 
     uploadedFile = sp.web.getFileByServerRelativePath(
       uploadResult.ServerRelativeUrl,
     );
+
     const listItem = await uploadedFile.getItem();
 
     await listItem.validateUpdateListItem(
       [
-        {
-          FieldName: DOCUMENT_COLUMNS.DOCUMENT_NAME,
-          FieldValue: docDataForm.docName,
-        },
         {
           FieldName: DOCUMENT_COLUMNS.DOCUMENT_REFERENCE,
           FieldValue: docDataForm.docReference,
@@ -157,10 +159,33 @@ export const AddNewDocument = async (
       true,
     );
 
-    const item = await listItem.select("Id")();
+    const document = await listItem
+      .select(
+        "Id",
+        "FileLeafRef",
+        "FileRef",
+        "Created",
+        "OData__ModerationStatus",
+        "DocReference",
+        "DocName",
+        "DocType",
+        "DocParent",
+        "DocCategory",
+        "DocDepartment",
+        "DocKeywords",
+        "DocOwner/Id",
+        "DocOwner/Title",
+        "DocOwner/EMail",
+        "Author/Id",
+        "Author/Title",
+        "Author/EMail",
+        "File/Name",
+        "File/ServerRelativeUrl",
+      )
+      .expand("DocOwner", "Author", "File")();
 
     await AddToList(sp, libraryName, {
-      DocumentId: item.Id,
+      DocumentId: document.Id,
       ParentDocumentId: docDataForm.docParent ?? null,
       [DOCUMENT_COLUMNS.DOCUMENT_REFERENCE]: docDataForm.docReference,
       [DOCUMENT_COLUMNS.DOCUMENT_NAME]: docDataForm.docName,
@@ -168,7 +193,18 @@ export const AddNewDocument = async (
       [DOCUMENT_COLUMNS.DEPARTMENT]: docDataForm.docDepartment,
     });
 
-    return item.Id;
+    const parentDocument = docDataForm.docParent
+      ? await sp.web.lists
+          .getByTitle(libraryName)
+          .items.getById(docDataForm.docParent)
+          .select("Id", "FileLeafRef")()
+      : null;
+    return {
+      ...document,
+      ApprovalStatus:
+        document.OData__ModerationStatus === 0 ? "Approved" : "Draft",
+      DocParentName: parentDocument?.FileLeafRef,
+    } as ILibraryDocument;
   } catch (error) {
     if (uploadedFile) {
       try {
@@ -249,6 +285,7 @@ export const getLibraryDocuemnts = async (
 
   return documents.map((document) => ({
     ...document,
+    DocName: document.FileLeafRef,
     ApprovalStatus: getApprovalStatusText(document.OData__ModerationStatus),
     DocKeywords: document.DocKeywords
       ? JSON.parse(document.DocKeywords).join(" ")
@@ -256,7 +293,7 @@ export const getLibraryDocuemnts = async (
     DocParentName: document.DocParent
       ? documents.find(
           (parentDocument) => parentDocument.Id === document.DocParent,
-        )?.DocName
+        )?.FileLeafRef
       : undefined,
   }));
 };
@@ -273,7 +310,7 @@ export const getParentDocument = async (
     return [];
   }
 
-  let filter = `substringof('${searchValue}', ${DOCUMENT_COLUMNS.DOCUMENT_NAME})`;
+  let filter = `substringof('${searchValue}', FileLeafRef)`;
 
   if (currentDocumentId !== undefined) {
     filter += ` and Id ne ${currentDocumentId}`;
@@ -283,7 +320,7 @@ export const getParentDocument = async (
     .getByTitle(libraryName)
     .items.select(
       "Id",
-      DOCUMENT_COLUMNS.DOCUMENT_NAME,
+      "FileLeafRef",
       DOCUMENT_COLUMNS.DOCUMENT_TYPE,
       DOCUMENT_COLUMNS.PARENT_DOCUMENT,
     )

@@ -1,31 +1,27 @@
 import React from "react";
 import styles from "./UserPage.module.scss";
+
 import AppSearchBox from "../common/AppSearchBox/AppSearchBox";
 import AppDropdown from "../common/AppDropdown/AppDropdown";
 import AppButton from "../common/AppButton/AppButton";
 import AppLoading from "../common/AppLoading/Apploading";
+
 import { useCategoryContext } from "../../contexts/CategoryContext";
 import { useUserDocuments } from "./hooks/useUserDocuments";
 import UserDocumentTree from "./components/UserDocumentTree";
-import { IUserPage } from "../../types/userTypes";
 
-const UserPage = ({ activeLibraryId, libraryName }: IUserPage) => {
+import { IUserPage } from "../../types/userTypes";
+import { useDocumentSession } from "../../hooks/useDocumentSession";
+
+const UserPage = ({ libraryName }: IUserPage) => {
+  const { user, updateUserValue, clearUserFilters } = useDocumentSession();
+
   const { categoriesMap } = useCategoryContext();
 
-  const {
-    searchValue,
-    setSearchValue,
-    categoryFilter,
-    setCategoryFilter,
-    documents,
-    loading,
-    hasSearched,
-    searchDocuments,
-    resetSearch,
-  } = useUserDocuments({
-    libraryName,
-    activeLibraryId,
-  });
+  const { documents, loading, hasSearched, searchDocuments, resetSearch } =
+    useUserDocuments({
+      libraryName,
+    });
 
   const categoryOptions = Object.keys(categoriesMap).map((key) => {
     const category = categoriesMap[Number(key)];
@@ -41,19 +37,20 @@ const UserPage = ({ activeLibraryId, libraryName }: IUserPage) => {
       <div className={styles.toolsDiv}>
         <div className={styles.flexRow}>
           <AppSearchBox
-            value={searchValue}
+            value={user.searchTerm}
             fullWidth={true}
             placeholder="Search by name, reference, department..."
-            onChange={setSearchValue}
+            onChange={(value) => updateUserValue("searchTerm", value)}
           />
 
           <AppDropdown
             placeholder="Filter by category..."
-            value={categoryFilter ?? undefined}
-            onChange={setCategoryFilter}
+            value={user.selectedCategory ?? undefined}
+            onChange={(value) => updateUserValue("selectedCategory", value)}
             options={categoryOptions}
           />
         </div>
+
         <div className={styles.flexRow}>
           <AppButton fullWidth={true} text="Search" onClick={searchDocuments} />
 
@@ -61,7 +58,10 @@ const UserPage = ({ activeLibraryId, libraryName }: IUserPage) => {
             fullWidth={true}
             variant="secondary"
             text="Reset"
-            onClick={resetSearch}
+            onClick={()=> {
+                clearUserFilters();
+                resetSearch();
+            }}
           />
         </div>
       </div>
@@ -89,10 +89,7 @@ const UserPage = ({ activeLibraryId, libraryName }: IUserPage) => {
         )}
 
         {!loading && documents.length > 0 && (
-          <UserDocumentTree
-            documents={documents}
-            activeLibraryId={activeLibraryId}
-          />
+          <UserDocumentTree documents={documents} />
         )}
       </div>
     </section>

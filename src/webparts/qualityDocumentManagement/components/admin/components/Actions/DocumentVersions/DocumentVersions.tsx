@@ -13,11 +13,11 @@ import { useNotification } from "../../../../../contexts/NotificationContext";
 
 const DocumentVersions = ({
   serverRelativeUrl,
-  onRefreshDocuments,
   isRejected,
+  setDocuments ,
 }: IDocumentVersionsProps) => {
   const { sp } = useSharePoint();
-  const {setError} = useNotification();
+  const { setError } = useNotification();
 
   const [versions, setVersions] = useState<IFileVersion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,11 +32,11 @@ const DocumentVersions = ({
       setVersions(result);
     } catch (error) {
       console.error("Failed to load document versions:", error);
-       setError(
-         error instanceof Error
-           ? error.message
-           : "Failed to load document versions",
-       );
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to load document versions",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +72,7 @@ const DocumentVersions = ({
             selectedVersion={selectedVersion}
             serverRelativeUrl={serverRelativeUrl}
             onRefresh={loadVersions}
-            onRefreshDocuments={onRefreshDocuments}
+            setDocuments={setDocuments}
           />
         )}
       </div>
