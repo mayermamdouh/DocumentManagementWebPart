@@ -42,7 +42,6 @@ export const useDocumentSession = () => {
       }
 
       const parsed = JSON.parse(stored);
-
       return {
         ...defaultValues,
         ...parsed,
