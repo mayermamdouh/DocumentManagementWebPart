@@ -14,7 +14,8 @@ import { useNotification } from "../../../../../contexts/NotificationContext";
 const DocumentVersions = ({
   serverRelativeUrl,
   isRejected,
-  setDocuments ,
+  setDocuments,
+  
 }: IDocumentVersionsProps) => {
   const { sp } = useSharePoint();
   const { setError } = useNotification();

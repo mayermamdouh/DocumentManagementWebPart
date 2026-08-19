@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./DocumentTable.module.scss";
 
 import {
@@ -21,6 +21,7 @@ const DocumentTable = ({
   libraryName,
   setDocuments,
   valueTypeFilter,
+  activeDocumentId,
 }: IDocumentTableProps) => {
   const rows = useAdminDocumentRows(documents);
   const [expandedDocuments, setExpandedDocuments] = useState<Set<number>>(
@@ -39,6 +40,20 @@ const DocumentTable = ({
     useState<ILibraryDocument | null>(null);
 
   const [popupType, setPopupType] = useState<AdminActionType | null>(null);
+
+  useEffect(() => {
+    if (activeDocumentId === null || activeDocumentId === undefined) {
+      return;
+    }
+
+    const document = rows.find((item) => item.Id === activeDocumentId);
+    if (!document) {
+      return;
+    }
+
+    setSelectedDocument(document);
+    setPopupType("versionHistory");
+  }, [activeDocumentId, rows]);
 
   const visibleRows = useMemo(() => {
     const result = [];
@@ -152,14 +167,14 @@ const DocumentTable = ({
           />
         );
       case "DeleteDocument":
-      return (
-        <DeleteDocument
-          onClose={handleClosePopup}
-          setDocuments={setDocuments}
-          libraryName={libraryName}
-          documentId={selectedDocument.Id}
-        />
-      );
+        return (
+          <DeleteDocument
+            onClose={handleClosePopup}
+            setDocuments={setDocuments}
+            libraryName={libraryName}
+            documentId={selectedDocument.Id}
+          />
+        );
 
       default:
         return null;
@@ -239,6 +254,7 @@ const DocumentTable = ({
                             {expandedDocuments.has(document.Id) ? "▼" : "▶"}
                           </button>
                         )}
+                      {document.childrenCount}
 
                       <a
                         className={styles.fileLink}

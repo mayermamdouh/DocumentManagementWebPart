@@ -9,6 +9,7 @@ import { useDocumentSession } from "../../../hooks/useDocumentSession";
 const UserDocumentTree = ({ documents }: IUserDocumentTreeProps) => {
   const tree = useDocumentTree(documents);
   const visibleTree = useVisibleDocumentTree(tree);
+  console.log("visibleTree: ", visibleTree)
   return (
     <div className={styles.tree}>
       {visibleTree.length > 0 ? (

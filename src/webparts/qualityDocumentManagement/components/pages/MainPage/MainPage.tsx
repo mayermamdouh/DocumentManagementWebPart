@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./MainPage.module.scss";
 import type { IQualityDocumentManagementProps } from "../../IQualityDocumentManagementProps";
 import { useNotification } from "../../../contexts/NotificationContext";
@@ -19,17 +19,54 @@ import { useDocumentSession } from "../../../hooks/useDocumentSession";
 const MainPage = (props: IQualityDocumentManagementProps) => {
   const { isLoading, isPrepared, isSiteAdmin, getAdministratorLogin } =
     useLibraryPreparation(props);
+  const [navigation, setNavigation] = useState<{
+    libraryName: string | null;
+    documentId: number | null;
+  }>({
+    libraryName: null,
+    documentId: null,
+  });
 
   const { currentUserLogin, visibleLibraries } = useLibraryAccess(
     props,
     isSiteAdmin,
     getAdministratorLogin,
   );
-  const { activeLibraryId, updateValue ,activePage } = useDocumentSession();
+  const { activeLibraryId, updateValue, activePage } = useDocumentSession();
   const { currentLibrary } = useActiveLibrary(visibleLibraries);
 
   const { message, clearMessage, error, clearError } = useNotification();
   const hasLibraries = props.libraries.some((library) => Boolean(library.id));
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+
+    const libraryName = params.get("library");
+    const documentIdParam = params.get("documentId");
+
+    if (!libraryName || !documentIdParam) {
+      return;
+    }
+
+    const documentId = Number(documentIdParam);
+    if (Number.isNaN(documentId)) {
+      return;
+    }
+    setNavigation({
+      libraryName,
+      documentId,
+    });
+
+    const library = visibleLibraries.find((item) => item.title === libraryName);
+    if (!library) {
+      return;
+    }
+
+    updateValue({
+      activePage: "AdminPage",
+      activeLibraryId: library.id,
+    });
+  }, [visibleLibraries, updateValue]);
 
   if (!hasLibraries) {
     return <ConfigurationRequired hasLibraries={false} />;
@@ -108,7 +145,7 @@ const MainPage = (props: IQualityDocumentManagementProps) => {
         ) : (
           isCurrentLibraryAdministrator && (
             <AdminPage
-              // activeLibraryId={activeLibraryId}
+              activeDocumentId={navigation.documentId}
               libraryName={currentLibrary?.title ?? ""}
             />
           )

@@ -8,6 +8,7 @@ export interface IEditCatergoties {
 
 export interface IAdminPage {
   libraryName: string;
+  activeDocumentId: number | null;
 }
 
 export interface IAddNewDoc {
@@ -45,6 +46,7 @@ export interface ILibraryDocument {
   Id: number;
   FileLeafRef: string;
   FileRef: string;
+  childrenCount?: Number;
   File: {
     Name: string;
     ServerRelativeUrl: string;
@@ -86,6 +88,7 @@ export interface IDocumentTableProps {
   libraryName: string;
   setDocuments: React.Dispatch<React.SetStateAction<ILibraryDocument[]>>;
   valueTypeFilter: string | null;
+  activeDocumentId: number | null;
 }
 
 export interface IAdminActions {
@@ -128,7 +131,6 @@ export interface IEditDocumentFormData {
   docDepartment: string;
   docKeywords: string;
   docOwnerId?: number;
-
 }
 
 export interface IFileVersion {

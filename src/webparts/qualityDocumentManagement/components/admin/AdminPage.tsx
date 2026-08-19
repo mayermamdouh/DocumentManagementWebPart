@@ -21,7 +21,7 @@ import { exportDocumentsToExcel } from "./service/ExportExcelService";
 import { useAdminDocumentFilter } from "./hooks/useAdminDocumentFilter";
 import { useDocumentSession } from "../../hooks/useDocumentSession";
 
-const AdminPage = ({ libraryName }: IAdminPage) => {
+const AdminPage = ({ libraryName, activeDocumentId }: IAdminPage) => {
   const { activeLibraryId, admin, updateAdminValue, clearAdminFilters } =
     useDocumentSession();
 
@@ -81,26 +81,6 @@ const AdminPage = ({ libraryName }: IAdminPage) => {
     exportDocumentsToExcel(filteredDocuments, libraryName);
   };
 
-  // const handleDocumentAdded = useCallback((document: ILibraryDocument) => {
-  //   setDocuments((prev) => [...prev, document]);
-  // }, []);
-
-  // const handleDocumentUpdated = useCallback(
-  //   (updatedDocument: ILibraryDocument) => {
-  //     setDocuments((prev) =>
-  //       prev.map((document) =>
-  //         document.Id === updatedDocument.Id ? updatedDocument : document,
-  //       ),
-  //     );
-  //   },
-  //   [],
-  // );
-
-  // const handleDocumentDeleted = useCallback((documentId: number) => {
-  //   setDocuments((prev) =>
-  //     prev.filter((document) => document.Id !== documentId),
-  //   );
-  // }, []);
 
   return (
     <section className={styles.adminSection}>
@@ -193,6 +173,7 @@ const AdminPage = ({ libraryName }: IAdminPage) => {
         <DocumentTable
           documents={filteredDocuments}
           valueTypeFilter={valueTypeFilter}
+          activeDocumentId={activeDocumentId}
           libraryName={libraryName}
           setDocuments={setDocuments}
         />

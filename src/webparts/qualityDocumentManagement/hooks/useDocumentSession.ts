@@ -159,6 +159,7 @@ export const useDocumentSession = () => {
   return {
     activeLibraryId: values.activeLibraryId,
     activePage: values.activePage,
+    
     admin: values.admin,
     user: values.user,
     updateValue,

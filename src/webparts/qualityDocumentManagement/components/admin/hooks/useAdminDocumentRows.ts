@@ -4,6 +4,7 @@ import type { ILibraryDocument } from "../../../types/adminTypes";
 
 export interface IAdminDocumentRow extends ILibraryDocument {
   level: number;
+  childrenCount: number;
 }
 
 export const useAdminDocumentRows = (
@@ -33,10 +34,20 @@ export const useAdminDocumentRows = (
 
     const rows: IAdminDocumentRow[] = [];
 
+    const getChildrenCount = (documentId: number): number => {
+      const children = childrenMap.get(documentId) ?? [];
+
+      return children.reduce(
+        (total, child) => total + 1 + getChildrenCount(child.Id),
+        0,
+      );
+    };
+
     const addDocument = (document: ILibraryDocument, level: number): void => {
       rows.push({
         ...document,
         level,
+        childrenCount: getChildrenCount(document.Id),
       });
 
       const children = childrenMap.get(document.Id) ?? [];
@@ -46,9 +57,9 @@ export const useAdminDocumentRows = (
       });
     };
 
-const roots = documents.filter(
-  (document) => !document.DocParent || !documentMap.has(document.DocParent),
-);
+    const roots = documents.filter(
+      (document) => !document.DocParent || !documentMap.has(document.DocParent),
+    );
 
     roots.forEach((root) => {
       addDocument(root, 0);
